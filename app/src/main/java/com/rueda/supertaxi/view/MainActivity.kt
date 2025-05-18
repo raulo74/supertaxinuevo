@@ -18,18 +18,20 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.rueda.supertaxi.R
 import com.rueda.supertaxi.databinding.ActivityMainBinding
-import com.rueda.supertaxi.viewmodel.MainViewModel
+import com.rueda.supertaxi.model.TipoServicio
 import com.rueda.supertaxi.util.LocationService
+import com.rueda.supertaxi.viewmodel.MainViewModel
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels()
-    private lateinit var locationService: LocationService
     
     private lateinit var tipoServicioAdapter: ArrayAdapter<String>
     private lateinit var tipoPagoAdapter: ArrayAdapter<String>
@@ -47,6 +49,9 @@ class MainActivity : AppCompatActivity() {
                 } else if (isTrackingRoute2) {
                     viewModel.addLocationToRoute(latitude, longitude, false)
                 }
+                
+                // Actualizar UI con la información de ruta si es necesario
+                updateRouteUI(isTrackingRoute1, isTrackingRoute2)
             }
         }
     }
@@ -73,19 +78,9 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == RESULT_OK) {
-            // Verificar si necesitamos reiniciar el servicio
             if (result.data?.getBooleanExtra("REINICIAR_SERVICIO", false) == true) {
                 Log.d("MainActivity", "Recibida señal de reinicio desde DetalleActivity")
-                // Reiniciar todas las variables y configuración
-                viewModel.resetVariables()
-                
-                // Restablecer UI
-                binding.editImporte.setText("")
-                binding.editComision.setText("")
-                binding.spinnerTipoPago.setSelection(0)
-                
-                // Log para depuración
-                Log.d("MainActivity", "Variables del servicio reiniciadas")
+                resetUI()
             }
         }
     }
@@ -93,14 +88,45 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         try {
-            Log.d("MainActivity", "onCreate iniciado")
             binding = ActivityMainBinding.inflate(layoutInflater)
             setContentView(binding.root)
+            
+            // Configurar la barra de navegación inferior
+            setupBottomNavigation()
             
             checkPermissions()
         } catch (e: Exception) {
             Log.e("MainActivity", "Error en onCreate", e)
             Toast.makeText(this, "Error al iniciar la aplicación: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+    
+    private fun setupBottomNavigation() {
+        // Asumiendo que has añadido un BottomNavigationView en tu layout
+        val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        bottomNav?.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_servicio -> {
+                    // Ya estamos en la pantalla de servicio
+                    true
+                }
+                R.id.nav_historial -> {
+                    // Implementar navegación al historial (puedes usar un Fragment o Activity)
+                    Toast.makeText(this, "Historial - Funcionalidad pendiente", Toast.LENGTH_SHORT).show()
+                    true
+                }
+                R.id.nav_ingresos -> {
+                    // Implementar navegación a ingresos
+                    Toast.makeText(this, "Ingresos - Funcionalidad pendiente", Toast.LENGTH_SHORT).show()
+                    true
+                }
+                R.id.nav_ajustes -> {
+                    // Implementar navegación a ajustes
+                    Toast.makeText(this, "Ajustes - Funcionalidad pendiente", Toast.LENGTH_SHORT).show()
+                    true
+                }
+                else -> false
+            }
         }
     }
     
@@ -172,15 +198,17 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun setupSpinners() {
+        // Configurar spinner de tipo de servicio
         tipoServicioAdapter = ArrayAdapter(
             this,
-            android.R.layout.simple_spinner_item,
+            R.layout.item_spinner,
             mutableListOf<String>()
         ).apply {
-            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            setDropDownViewResource(R.layout.item_spinner_dropdown)
         }
         binding.spinnerTipoServicio.adapter = tipoServicioAdapter
         
+        // Configurar spinner de tipo de pago
         val tiposPago = arrayOf(
             getString(R.string.efectivo),
             getString(R.string.tarjeta),
@@ -188,37 +216,46 @@ class MainActivity : AppCompatActivity() {
         )
         tipoPagoAdapter = ArrayAdapter(
             this,
-            android.R.layout.simple_spinner_item,
+            R.layout.item_spinner,
             tiposPago
         ).apply {
-            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            setDropDownViewResource(R.layout.item_spinner_dropdown)
         }
         binding.spinnerTipoPago.adapter = tipoPagoAdapter
     }
     
     private fun setupObservers() {
+        // Observar tipos de servicio
         viewModel.allTiposServicio.observe(this) { tiposServicio ->
             val tiposServicioList = tiposServicio.map { it.nombre }.toMutableList()
+            
+            // Agregar opción para añadir nuevo tipo
             tiposServicioList.add("+ Añadir nuevo tipo")
             
             tipoServicioAdapter.clear()
             tipoServicioAdapter.addAll(tiposServicioList)
         }
         
+        // Observar estados de los botones con estilo mejorado
         viewModel.empezarEnabled.observe(this) { enabled ->
             binding.btnEmpezar.isEnabled = enabled
-            binding.btnEmpezar.alpha = if (enabled) 1.0f else 0.5f
+            updateButtonStyle(binding.btnEmpezar, enabled, R.color.colorPrimary)
         }
         
         viewModel.inicioServicioEnabled.observe(this) { enabled ->
             binding.btnInicioServicio.isEnabled = enabled
-            binding.btnInicioServicio.alpha = if (enabled) 1.0f else 0.5f
+            updateButtonStyle(binding.btnInicioServicio, enabled, R.color.colorAccent)
+            
+            // Mostrar/ocultar sección de mapa
+            binding.cardMapaPreview.isVisible = enabled || viewModel.finServicioEnabled.value == true
         }
         
         viewModel.finServicioEnabled.observe(this) { enabled ->
             binding.btnFinServicio.isEnabled = enabled
-            binding.btnFinServicio.alpha = if (enabled) 1.0f else 0.5f
+            updateButtonStyle(binding.btnFinServicio, enabled, R.color.colorRed)
             
+            // Mostrar/ocultar controles de pago
+            binding.layoutDatosPago.isVisible = enabled
             binding.editImporte.isEnabled = enabled
             binding.editComision.isEnabled = enabled
             binding.spinnerTipoPago.isEnabled = enabled
@@ -226,45 +263,129 @@ class MainActivity : AppCompatActivity() {
         
         viewModel.resumenEnabled.observe(this) { enabled ->
             binding.btnResumenServicio.isEnabled = enabled
-            binding.btnResumenServicio.alpha = if (enabled) 1.0f else 0.5f
+            updateButtonStyle(binding.btnResumenServicio, enabled, R.color.colorPurple)
+        }
+        
+        // Observar datos de distancia y tiempo para mostrar en la UI
+        viewModel.km1.observe(this) { km ->
+            if (km > 0) {
+                binding.tvDistanciaHastaCliente.text = String.format("%.1f km", km)
+            }
+        }
+        
+        viewModel.km2.observe(this) { km ->
+            if (km > 0) {
+                binding.tvDistanciaServicio.text = String.format("%.1f km", km)
+            }
+        }
+        
+        // Si tienes LiveData para los tiempos, también puedes observarlos
+        viewModel.hora1.observe(this) { hora1 ->
+            viewModel.hora2.observe(this) { hora2 ->
+                if (hora1 != null && hora2 != null) {
+                    // Calcular y mostrar el tiempo hasta la recogida
+                    updateTiempoUI(hora1, hora2, binding.tvTiempoHastaCliente)
+                }
+            }
+        }
+        
+        viewModel.hora2.observe(this) { hora2 ->
+            viewModel.hora3.observe(this) { hora3 ->
+                if (hora2 != null && hora3 != null) {
+                    // Calcular y mostrar el tiempo del servicio
+                    updateTiempoUI(hora2, hora3, binding.tvTiempoServicio)
+                }
+            }
         }
     }
     
+    private fun updateButtonStyle(button: android.widget.Button, enabled: Boolean, colorResId: Int) {
+        if (enabled) {
+            button.setBackgroundResource(R.drawable.bg_button_enabled)
+            button.setTextColor(ContextCompat.getColor(this, android.R.color.white))
+            button.backgroundTintList = ContextCompat.getColorStateList(this, colorResId)
+        } else {
+            button.setBackgroundResource(R.drawable.bg_button_disabled)
+            button.setTextColor(ContextCompat.getColor(this, R.color.colorTextDisabled))
+            button.backgroundTintList = ContextCompat.getColorStateList(this, R.color.colorDisabled)
+        }
+    }
+    
+    private fun updateTiempoUI(horaInicio: java.time.LocalTime, horaFin: java.time.LocalTime, textView: android.widget.TextView) {
+        val minutos = java.time.Duration.between(horaInicio, horaFin).toMinutes()
+        textView.text = "$minutos min"
+    }
+    
+    private fun updateRouteUI(isTrackingRoute1: Boolean, isTrackingRoute2: Boolean) {
+        binding.routeStatusText.text = when {
+            isTrackingRoute1 -> "Ruta hasta el cliente..."
+            isTrackingRoute2 -> "Ruta del servicio en curso..."
+            else -> if (viewModel.resumenEnabled.value == true) "Servicio finalizado" else ""
+        }
+        
+        // Mostrar/ocultar paneles según el estado del tracking
+        binding.panelRutaCliente.isVisible = isTrackingRoute1 || (viewModel.km1.value ?: 0.0) > 0
+        binding.panelRutaServicio.isVisible = isTrackingRoute2 || (viewModel.km2.value ?: 0.0) > 0
+    }
+    
     private fun setupListeners() {
+        // Spinner tipo de servicio
         binding.spinnerTipoServicio.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 val selected = parent?.getItemAtPosition(position) as String
                 if (selected == "+ Añadir nuevo tipo") {
                     showAddTipoServicioDialog()
+                    
+                    // Revertir a la selección anterior
                     if (parent.count > 1) {
                         parent.setSelection(0)
                     }
                 } else {
                     viewModel.setTipoServicio(selected)
-                    Log.d("MainActivity", "Tipo de servicio seleccionado: $selected")
                 }
             }
             
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
         
+        // Botón empezar con nueva estética
         binding.btnEmpezar.setOnClickListener {
             viewModel.empezarServicio()
-            Log.d("MainActivity", "Botón Empezar pulsado")
+            
+            // Animación para mostrar el panel de mapa
+            binding.cardMapaPreview.alpha = 0f
+            binding.cardMapaPreview.isVisible = true
+            binding.cardMapaPreview.animate()
+                .alpha(1f)
+                .setDuration(300)
+                .start()
         }
         
+        // Botón inicio servicio
         binding.btnInicioServicio.setOnClickListener {
             viewModel.inicioServicio()
-            Log.d("MainActivity", "Botón Inicio de Servicio pulsado")
+            
+            // Animación para mostrar el panel de datos de pago
+            binding.layoutDatosPago.alpha = 0f
+            binding.layoutDatosPago.isVisible = true
+            binding.layoutDatosPago.animate()
+                .alpha(1f)
+                .setDuration(300)
+                .start()
         }
         
+        // Botón fin servicio
         binding.btnFinServicio.setOnClickListener {
+            // Obtener datos de los campos
             val importeStr = binding.editImporte.text.toString()
             val comisionStr = binding.editComision.text.toString()
             val tipoPago = binding.spinnerTipoPago.selectedItem.toString()
             
+            // Validar datos
             if (importeStr.isBlank() || comisionStr.isBlank()) {
-                Toast.makeText(this, "Completa todos los campos", Toast.LENGTH_SHORT).show()
+                // Utilizamos Material Design para el mensaje de error
+                binding.editImporte.error = if (importeStr.isBlank()) "Campo requerido" else null
+                binding.editComision.error = if (comisionStr.isBlank()) "Campo requerido" else null
                 return@setOnClickListener
             }
             
@@ -277,18 +398,31 @@ class MainActivity : AppCompatActivity() {
                 viewModel.setTipoPago(tipoPago)
                 viewModel.finServicio()
                 
-                Log.d("MainActivity", "Botón Fin de Servicio pulsado")
+                // Actualizar UI para mostrar "Servicio finalizado"
+                binding.routeStatusText.text = "Servicio finalizado"
             } catch (e: NumberFormatException) {
-                Toast.makeText(this, "Valor numérico inválido", Toast.LENGTH_SHORT).show()
+                MaterialAlertDialogBuilder(this)
+                    .setTitle("Error de formato")
+                    .setMessage("Los valores de importe y comisión deben ser números válidos")
+                    .setPositiveButton("Entendido", null)
+                    .show()
             }
         }
         
+        // Botón resumen servicio con transición moderna
         binding.btnResumenServicio.setOnClickListener {
             val intent = Intent(this, DetalleActivity::class.java).apply {
                 putExtra("SERVICIO_ID", viewModel.currentServicioId.value)
             }
-            detalleActivityLauncher.launch(intent)
-            Log.d("MainActivity", "Botón Resumen de Servicio pulsado")
+            
+            // Uso de ActivityOptionsCompat para animación de transición
+            val options = androidx.core.app.ActivityOptionsCompat.makeCustomAnimation(
+                this,
+                R.anim.slide_in_right,
+                R.anim.slide_out_left
+            )
+            
+            detalleActivityLauncher.launch(intent, options)
         }
     }
     
@@ -303,6 +437,13 @@ class MainActivity : AppCompatActivity() {
                 val nuevoTipo = editTipoServicio.text.toString().trim()
                 if (nuevoTipo.isNotEmpty()) {
                     viewModel.addTipoServicio(nuevoTipo)
+                    
+                    // Feedback visual
+                    Toast.makeText(
+                        this,
+                        "Tipo de servicio '${nuevoTipo}' añadido",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
             .setNegativeButton(R.string.cancelar, null)
@@ -329,6 +470,33 @@ class MainActivity : AppCompatActivity() {
     private fun setFirstRunComplete() {
         val prefs = getSharedPreferences("SuperTaxiPrefs", Context.MODE_PRIVATE)
         prefs.edit().putBoolean("isFirstRun", false).apply()
+    }
+    
+    private fun resetUI() {
+        // Reiniciar el ViewModel
+        viewModel.resetVariables()
+        
+        // Limpiar campos de UI
+        binding.editImporte.setText("")
+        binding.editImporte.error = null
+        binding.editComision.setText("")
+        binding.editComision.error = null
+        binding.spinnerTipoPago.setSelection(0)
+        
+        // Ocultar paneles que deberían estar ocultos al inicio
+        binding.cardMapaPreview.isVisible = false
+        binding.layoutDatosPago.isVisible = false
+        binding.panelRutaCliente.isVisible = false
+        binding.panelRutaServicio.isVisible = false
+        
+        // Resetear textos informativos
+        binding.tvDistanciaHastaCliente.text = "0.0 km"
+        binding.tvDistanciaServicio.text = "0.0 km"
+        binding.tvTiempoHastaCliente.text = "0 min"
+        binding.tvTiempoServicio.text = "0 min"
+        binding.routeStatusText.text = ""
+        
+        Log.d("MainActivity", "UI reiniciada")
     }
     
     override fun onDestroy() {
