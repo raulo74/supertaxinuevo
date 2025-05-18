@@ -111,8 +111,9 @@ class MainActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_historial -> {
-                    // Implementar navegación al historial (puedes usar un Fragment o Activity)
-                    Toast.makeText(this, "Historial - Funcionalidad pendiente", Toast.LENGTH_SHORT).show()
+                    // Navegar a la pantalla de resumen
+                    val intent = Intent(this, ResumenActivity::class.java)
+                    startActivity(intent)
                     true
                 }
                 R.id.nav_ingresos -> {

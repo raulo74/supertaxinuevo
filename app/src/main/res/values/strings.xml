@@ -33,4 +33,27 @@
     <string name="aniadir">Añadir</string>
     <string name="cancelar">Cancelar</string>
     <string name="definir_apps_trabajo">Define las app con la que trabajas como por ejemplo (PideTaxi, Freenow, Joinup, uber, etc), asegúrate de ponerlas todas también con la que no trabajes y podrías volver a trabajar, de momento se podrán cambiar</string>
+    
+    <!-- Strings para la pantalla de resumen -->
+    <string name="resumen_servicios">Resumen de Servicios</string>
+    <string name="filtro_hoy">Hoy</string>
+    <string name="filtro_semana">Semana</string>
+    <string name="filtro_mes">Mes</string>
+    <string name="filtro_todo">Todo</string>
+    <string name="servicios">Servicios</string>
+    <string name="ingresos">Ingresos</string>
+    <string name="recorrido">Recorrido</string>
+    <string name="sin_servicios">No hay servicios para mostrar</string>
+    <string name="detalles">Detalles</string>
+    <string name="eliminar">Eliminar</string>
+    <string name="confirmar_eliminar">¿Estás seguro de que deseas eliminar este servicio?</string>
+    <string name="si">Sí</string>
+    <string name="no">No</string>
+    <string name="servicio_filtrado">Filtro aplicado: %1$s</string>
+    <string name="minutos">%1$d min</string>
+    <string name="euros">%1$.2f€</string>
+    <string name="kilometros">%1$.1f km</string>
+    <string name="origen">Origen:</string>
+    <string name="destino">Destino:</string>
+    <string name="duracion">Duración:</string>
 </resources>
