@@ -123,21 +123,33 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun setTipoServicio(tipo: String) {
         _tipoServicio.value = tipo
         
-        // Modificación: Si el tipo es "Mano Alzada", activar directamente 
-        // el botón de inicio de servicio y desactivar el botón empezar
+        // Lógica especial para tipo "Mano Alzada"
         if (tipo == "Mano Alzada") {
+            // Para Mano Alzada, bloqueamos Empezar y habilitamos directamente Inicio de servicio
             _empezarEnabled.value = false
             _inicioServicioEnabled.value = true
+            _finServicioEnabled.value = false
+            _resumenEnabled.value = false
+            
+            // Establecer fecha y hora de inicio automáticamente
+            _dia.value = LocalDate.now()
+            _hora1.value = LocalTime.now()
+            
+            // No iniciamos tracking para ruta1 en este caso
+            _ruta1.value = mutableListOf()
         } else {
+            // Para el resto de tipos de servicio, seguimos el flujo normal
             _empezarEnabled.value = true
             _inicioServicioEnabled.value = false
+            _finServicioEnabled.value = false
+            _resumenEnabled.value = false
         }
     }
 
     fun empezarServicio() {
         _dia.value = LocalDate.now()
         _hora1.value = LocalTime.now()
-
+        
         // Si es "Mano Alzada", no se guarda ruta1
         if (_tipoServicio.value == "Mano Alzada") {
             _ruta1.value = mutableListOf()
@@ -149,19 +161,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
             getApplication<Application>().startService(intent)
         }
-
+        
+        // Actualizar estado de botones
+        _empezarEnabled.value = false
         _inicioServicioEnabled.value = true
+        _finServicioEnabled.value = false
+        _resumenEnabled.value = false
     }
 
     fun inicioServicio() {
-        // Modificación: Si es "Mano Alzada", inicializar dia y hora1 aquí
-        if (_tipoServicio.value == "Mano Alzada") {
-            _dia.value = LocalDate.now()
-            _hora1.value = LocalTime.now()
-            _ruta1.value = mutableListOf()
-            Log.d("MainViewModel", "Servicio Mano Alzada: Inicializando día y hora1")
-        }
-        
         // Guardar hora2
         _hora2.value = LocalTime.now()
         
@@ -169,31 +177,37 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val intent = Intent(getApplication(), LocationService::class.java).apply {
             putExtra("trackRoute1", false)
             putExtra("trackRoute2", true)
-            // Indicamos si es mano alzada para optimizar el tracking
-            putExtra("isManoAlzada", _tipoServicio.value == "Mano Alzada")
         }
         getApplication<Application>().startService(intent)
         
+        // Actualizar estado de botones
+        _empezarEnabled.value = false
+        _inicioServicioEnabled.value = false
         _finServicioEnabled.value = true
+        _resumenEnabled.value = false
     }
 
     fun finServicio() {
         // Guardar hora3
         _hora3.value = LocalTime.now()
-
+        
         // Detener tracking de ubicación
         val intent = Intent(getApplication(), LocationService::class.java).apply {
             putExtra("trackRoute1", false)
             putExtra("trackRoute2", false)
         }
         getApplication<Application>().startService(intent)
-
+        
         // Calcular datos finales
         calcularDatosFinales()
-
+        
         // Guardar en base de datos y CSV
         guardarServicio()
-
+        
+        // Actualizar estado de botones
+        _empezarEnabled.value = false
+        _inicioServicioEnabled.value = false
+        _finServicioEnabled.value = false
         _resumenEnabled.value = true
     }
 
@@ -334,13 +348,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun resetVariables() {
         Log.d("MainViewModel", "Iniciando resetVariables()")
-
+        
         // Reiniciar variables del servicio
         _tipoServicio.value = ""
-        _dia.value = LocalDate.now() // Usar fecha actual en lugar de null
-        _hora1.value = LocalTime.MIN // Usar tiempo mínimo en lugar de null
-        _hora2.value = LocalTime.MIN // Usar tiempo mínimo en lugar de null
-        _hora3.value = LocalTime.MIN // Usar tiempo mínimo en lugar de null
+        _dia.value = LocalDate.now()  // Usar fecha actual como valor predeterminado
+        _hora1.value = LocalTime.now()  // Usar hora actual como valor predeterminado
+        _hora2.value = LocalTime.now()
+        _hora3.value = LocalTime.now()
         _importe.value = 0.0
         _comision.value = 0.0
         _tipoPago.value = ""
@@ -356,17 +370,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _precioHora.value = 0.0
         _kmTotales.value = 0.0
         _precioKm.value = 0.0
-
-        // Reiniciar estados de botones
+        
+        // Reiniciar estados de botones - asegurarnos que todos están deshabilitados al iniciar
         _empezarEnabled.value = false
         _inicioServicioEnabled.value = false
         _finServicioEnabled.value = false
         _resumenEnabled.value = false
-
+        
         // Reiniciar ID del servicio actual
         _currentServicioId.value = 0
         servicioActual = null
-
+        
         Log.d("MainViewModel", "resetVariables() completado")
     }
 

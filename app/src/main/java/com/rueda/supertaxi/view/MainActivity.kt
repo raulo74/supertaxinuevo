@@ -207,16 +207,18 @@ class MainActivity : AppCompatActivity() {
         
         viewModel.empezarEnabled.observe(this) { enabled ->
             binding.btnEmpezar.isEnabled = enabled
-            Log.d("MainActivity", "Estado del botón Empezar: $enabled")
+            binding.btnEmpezar.alpha = if (enabled) 1.0f else 0.5f
         }
         
         viewModel.inicioServicioEnabled.observe(this) { enabled ->
             binding.btnInicioServicio.isEnabled = enabled
-            Log.d("MainActivity", "Estado del botón Inicio de Servicio: $enabled")
+            binding.btnInicioServicio.alpha = if (enabled) 1.0f else 0.5f
         }
         
         viewModel.finServicioEnabled.observe(this) { enabled ->
             binding.btnFinServicio.isEnabled = enabled
+            binding.btnFinServicio.alpha = if (enabled) 1.0f else 0.5f
+            
             binding.editImporte.isEnabled = enabled
             binding.editComision.isEnabled = enabled
             binding.spinnerTipoPago.isEnabled = enabled
@@ -224,6 +226,7 @@ class MainActivity : AppCompatActivity() {
         
         viewModel.resumenEnabled.observe(this) { enabled ->
             binding.btnResumenServicio.isEnabled = enabled
+            binding.btnResumenServicio.alpha = if (enabled) 1.0f else 0.5f
         }
     }
     
