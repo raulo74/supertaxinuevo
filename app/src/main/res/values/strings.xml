@@ -33,6 +33,7 @@
     <string name="aniadir">Añadir</string>
     <string name="cancelar">Cancelar</string>
     <string name="definir_apps_trabajo">Define las app con la que trabajas como por ejemplo (PideTaxi, Freenow, Joinup, uber, etc), asegúrate de ponerlas todas también con la que no trabajes y podrías volver a trabajar, de momento se podrán cambiar</string>
+<<<<<<< HEAD
     
     <!-- Strings para la pantalla de resumen -->
     <string name="resumen_servicios">Resumen de Servicios</string>
@@ -56,4 +57,6 @@
     <string name="origen">Origen:</string>
     <string name="destino">Destino:</string>
     <string name="duracion">Duración:</string>
+=======
+>>>>>>> 380daba4a791b0497c2011e02cad80f81a902f24
 </resources>

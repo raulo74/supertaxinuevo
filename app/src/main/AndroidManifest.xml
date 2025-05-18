@@ -53,11 +53,14 @@
             android:exported="false"
             android:screenOrientation="portrait" />
             
+<<<<<<< HEAD
         <activity
             android:name=".view.ResumenActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
             
+=======
+>>>>>>> 380daba4a791b0497c2011e02cad80f81a902f24
         <service
             android:name=".util.LocationService"
             android:enabled="true"

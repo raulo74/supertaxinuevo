@@ -36,7 +36,10 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+<<<<<<< HEAD
     
+=======
+>>>>>>> 380daba4a791b0497c2011e02cad80f81a902f24
     kotlinOptions {
         jvmTarget = "11"
     }
@@ -78,9 +81,12 @@ dependencies {
     // Dependencia para LocalBroadcastManager
     implementation("androidx.localbroadcastmanager:localbroadcastmanager:1.1.0")
     
+<<<<<<< HEAD
     // SwipeRefreshLayout
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
     
+=======
+>>>>>>> 380daba4a791b0497c2011e02cad80f81a902f24
     // Test
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
