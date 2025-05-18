@@ -22,113 +22,122 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // Repositorios
     private val servicioRepository: ServicioRepository
     private val tipoServicioRepository: TipoServicioRepository
-    
+
     // Datos de tipos de servicio
     val allTiposServicio: LiveData<List<TipoServicio>>
-    
+
     // Variables para el servicio actual
     private val _currentServicioId = MutableLiveData<Long>()
     val currentServicioId: LiveData<Long> = _currentServicioId
-    
+
     private val _tipoServicio = MutableLiveData<String>()
     val tipoServicio: LiveData<String> = _tipoServicio
-    
+
     private val _dia = MutableLiveData<LocalDate>()
     val dia: LiveData<LocalDate> = _dia
-    
+
     private val _hora1 = MutableLiveData<LocalTime>()
     val hora1: LiveData<LocalTime> = _hora1
-    
+
     private val _hora2 = MutableLiveData<LocalTime>()
     val hora2: LiveData<LocalTime> = _hora2
-    
+
     private val _hora3 = MutableLiveData<LocalTime>()
     val hora3: LiveData<LocalTime> = _hora3
-    
+
     private val _importe = MutableLiveData<Double>()
     val importe: LiveData<Double> = _importe
-    
+
     private val _comision = MutableLiveData<Double>()
     val comision: LiveData<Double> = _comision
-    
+
     private val _tipoPago = MutableLiveData<String>()
     val tipoPago: LiveData<String> = _tipoPago
-    
+
     private val _ruta1 = MutableLiveData<MutableList<Coordenada>>(mutableListOf())
     val ruta1: LiveData<MutableList<Coordenada>> = _ruta1
-    
+
     private val _ruta2 = MutableLiveData<MutableList<Coordenada>>(mutableListOf())
     val ruta2: LiveData<MutableList<Coordenada>> = _ruta2
-    
+
     // Datos calculados
     private val _km1 = MutableLiveData<Double>()
     val km1: LiveData<Double> = _km1
-    
+
     private val _km2 = MutableLiveData<Double>()
     val km2: LiveData<Double> = _km2
-    
+
     private val _calle1 = MutableLiveData<String>()
     val calle1: LiveData<String> = _calle1
-    
+
     private val _calle2 = MutableLiveData<String>()
     val calle2: LiveData<String> = _calle2
-    
+
     private val _calle3 = MutableLiveData<String>()
     val calle3: LiveData<String> = _calle3
-    
+
     private val _porcentaje = MutableLiveData<Double>()
     val porcentaje: LiveData<Double> = _porcentaje
-    
+
     private val _minutosTotales = MutableLiveData<Double>()
     val minutosTotales: LiveData<Double> = _minutosTotales
-    
+
     private val _precioHora = MutableLiveData<Double>()
     val precioHora: LiveData<Double> = _precioHora
-    
+
     private val _kmTotales = MutableLiveData<Double>()
     val kmTotales: LiveData<Double> = _kmTotales
-    
+
     private val _precioKm = MutableLiveData<Double>()
     val precioKm: LiveData<Double> = _precioKm
-    
+
     // Estado de los botones
     private val _empezarEnabled = MutableLiveData<Boolean>(false)
     val empezarEnabled: LiveData<Boolean> = _empezarEnabled
-    
+
     private val _inicioServicioEnabled = MutableLiveData<Boolean>(false)
     val inicioServicioEnabled: LiveData<Boolean> = _inicioServicioEnabled
-    
+
     private val _finServicioEnabled = MutableLiveData<Boolean>(false)
     val finServicioEnabled: LiveData<Boolean> = _finServicioEnabled
-    
+
     private val _resumenEnabled = MutableLiveData<Boolean>(false)
     val resumenEnabled: LiveData<Boolean> = _resumenEnabled
-    
+
     // Utilidades
     private val geocodingUtil = GeocodingUtil(application.applicationContext)
-    
+
     // Servicio actual
     private var servicioActual: Servicio? = null
-    
+
     init {
         val database = AppDatabase.getDatabase(application)
         servicioRepository = ServicioRepository(database.servicioDao(), application.applicationContext)
         tipoServicioRepository = TipoServicioRepository(database.tipoServicioDao())
         allTiposServicio = tipoServicioRepository.allTiposServicio
-        
+
         resetVariables()
     }
-    
+
     // Métodos para interacción con la UI
     fun setTipoServicio(tipo: String) {
         _tipoServicio.value = tipo
-        _empezarEnabled.value = true
+        
+        // Modificación: Si el tipo es "Mano Alzada", activar directamente 
+        // el botón de inicio de servicio y desactivar el botón empezar
+        if (tipo == "Mano Alzada") {
+            _empezarEnabled.value = false
+            _inicioServicioEnabled.value = true
+        } else {
+            _empezarEnabled.value = true
+            _inicioServicioEnabled.value = false
+        }
     }
-    
+
     fun empezarServicio() {
         _dia.value = LocalDate.now()
         _hora1.value = LocalTime.now()
-        
+
         // Si es "Mano Alzada", no se guarda ruta1
         if (_tipoServicio.value == "Mano Alzada") {
             _ruta1.value = mutableListOf()
@@ -140,11 +149,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
             getApplication<Application>().startService(intent)
         }
-        
+
         _inicioServicioEnabled.value = true
     }
-    
+
     fun inicioServicio() {
+        // Modificación: Si es "Mano Alzada", inicializar dia y hora1 aquí
+        if (_tipoServicio.value == "Mano Alzada") {
+            _dia.value = LocalDate.now()
+            _hora1.value = LocalTime.now()
+            _ruta1.value = mutableListOf()
+            Log.d("MainViewModel", "Servicio Mano Alzada: Inicializando día y hora1")
+        }
+        
         // Guardar hora2
         _hora2.value = LocalTime.now()
         
@@ -152,64 +169,66 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val intent = Intent(getApplication(), LocationService::class.java).apply {
             putExtra("trackRoute1", false)
             putExtra("trackRoute2", true)
+            // Indicamos si es mano alzada para optimizar el tracking
+            putExtra("isManoAlzada", _tipoServicio.value == "Mano Alzada")
         }
         getApplication<Application>().startService(intent)
         
         _finServicioEnabled.value = true
     }
-    
+
     fun finServicio() {
         // Guardar hora3
         _hora3.value = LocalTime.now()
-        
+
         // Detener tracking de ubicación
         val intent = Intent(getApplication(), LocationService::class.java).apply {
             putExtra("trackRoute1", false)
             putExtra("trackRoute2", false)
         }
         getApplication<Application>().startService(intent)
-        
+
         // Calcular datos finales
         calcularDatosFinales()
-        
+
         // Guardar en base de datos y CSV
         guardarServicio()
-        
+
         _resumenEnabled.value = true
     }
-    
+
     private fun calcularDatosFinales() {
         viewModelScope.launch {
             // Calcular km1
             val distanciaRuta1 = DistanceCalculator.calculateDistance(ruta1.value ?: emptyList())
             _km1.value = distanciaRuta1
-            
+
             // Calcular km2
             val distanciaRuta2 = DistanceCalculator.calculateDistance(ruta2.value ?: emptyList())
             _km2.value = distanciaRuta2
-            
+
             // Calcular km totales
             _kmTotales.value = (km1.value ?: 0.0) + (km2.value ?: 0.0)
-            
+
             // Obtener calles
             ruta1.value?.firstOrNull()?.let { coordenada ->
                 _calle1.value = geocodingUtil.getAddressFromLocation(coordenada.latitud, coordenada.longitud)
             } ?: run {
                 _calle1.value = "No disponible"
             }
-            
+
             ruta2.value?.firstOrNull()?.let { coordenada ->
                 _calle2.value = geocodingUtil.getAddressFromLocation(coordenada.latitud, coordenada.longitud)
             } ?: run {
                 _calle2.value = "No disponible"
             }
-            
+
             ruta2.value?.lastOrNull()?.let { coordenada ->
                 _calle3.value = geocodingUtil.getAddressFromLocation(coordenada.latitud, coordenada.longitud)
             } ?: run {
                 _calle3.value = "No disponible"
             }
-            
+
             // Calcular porcentaje de comisión
             val importeVal = _importe.value ?: 0.0
             val comisionVal = _comision.value ?: 0.0
@@ -218,23 +237,29 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             } else {
                 _porcentaje.value = 0.0
             }
-            
+
             // Calcular minutos totales y precio por hora
             val h1 = _hora1.value ?: LocalTime.MIN
             val h2 = _hora2.value ?: LocalTime.MIN
             val h3 = _hora3.value ?: LocalTime.MIN
-            
-            val minutos1 = Duration.between(h1, h2).toMinutes().toDouble()
-            val minutos2 = Duration.between(h2, h3).toMinutes().toDouble()
-            val minutosTotalesValue = minutos1 + minutos2
+
+            val minutosTotalesValue = if (_tipoServicio.value == "Mano Alzada") {
+                // Para Mano Alzada: solo contar desde hora2 hasta hora3
+                Duration.between(h2, h3).toMinutes().toDouble()
+            } else {
+                // Para otros tipos: suma de los dos intervalos
+                val minutos1 = Duration.between(h1, h2).toMinutes().toDouble()
+                val minutos2 = Duration.between(h2, h3).toMinutes().toDouble()
+                minutos1 + minutos2
+            }
             _minutosTotales.value = minutosTotalesValue
-            
+
             if (minutosTotalesValue > 0) {
                 _precioHora.value = (importeVal / (minutosTotalesValue / 60))
             } else {
                 _precioHora.value = 0.0
             }
-            
+
             // Calcular precio por km
             if (_kmTotales.value != null && _kmTotales.value!! > 0) {
                 _precioKm.value = importeVal / _kmTotales.value!!
@@ -243,7 +268,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
-    
+
     private fun guardarServicio() {
         viewModelScope.launch {
             val nuevoServicio = Servicio(
@@ -268,16 +293,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 ruta1 = _ruta1.value?.toList() ?: emptyList(),
                 ruta2 = _ruta2.value?.toList() ?: emptyList()
             )
-            
+
             val id = servicioRepository.insert(nuevoServicio)
             _currentServicioId.value = id
             servicioActual = nuevoServicio.copy(id = id)
         }
     }
-    
+
     fun addLocationToRoute(latitude: Double, longitude: Double, isRoute1: Boolean) {
         val coordenada = Coordenada(latitude, longitude)
-        
+
         if (isRoute1) {
             val rutaActual = _ruta1.value ?: mutableListOf()
             rutaActual.add(coordenada)
@@ -288,34 +313,34 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _ruta2.value = rutaActual
         }
     }
-    
+
     fun setImporte(valor: Double) {
         _importe.value = valor
     }
-    
+
     fun setComision(valor: Double) {
         _comision.value = valor
     }
-    
+
     fun setTipoPago(tipo: String) {
         _tipoPago.value = tipo
     }
-    
+
     fun addTipoServicio(nombre: String) {
         viewModelScope.launch {
             tipoServicioRepository.insert(TipoServicio(nombre, false))
         }
     }
-    
+
     fun resetVariables() {
         Log.d("MainViewModel", "Iniciando resetVariables()")
-        
+
         // Reiniciar variables del servicio
         _tipoServicio.value = ""
-        _dia.value = null
-        _hora1.value = null
-        _hora2.value = null
-        _hora3.value = null
+        _dia.value = LocalDate.now() // Usar fecha actual en lugar de null
+        _hora1.value = LocalTime.MIN // Usar tiempo mínimo en lugar de null
+        _hora2.value = LocalTime.MIN // Usar tiempo mínimo en lugar de null
+        _hora3.value = LocalTime.MIN // Usar tiempo mínimo en lugar de null
         _importe.value = 0.0
         _comision.value = 0.0
         _tipoPago.value = ""
@@ -331,21 +356,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _precioHora.value = 0.0
         _kmTotales.value = 0.0
         _precioKm.value = 0.0
-        
+
         // Reiniciar estados de botones
         _empezarEnabled.value = false
         _inicioServicioEnabled.value = false
         _finServicioEnabled.value = false
         _resumenEnabled.value = false
-        
+
         // Reiniciar ID del servicio actual
         _currentServicioId.value = 0
         servicioActual = null
-        
+
         Log.d("MainViewModel", "resetVariables() completado")
     }
-    
+
     fun getServicioActual(): Servicio? {
         return servicioActual
     }
-} 
+}

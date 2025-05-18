@@ -23,6 +23,7 @@ class LocationService : Service() {
     
     private var isTrackingRoute1 = false
     private var isTrackingRoute2 = false
+    private var isManoAlzada = false
     
     override fun onCreate() {
         super.onCreate()
@@ -57,7 +58,16 @@ class LocationService : Service() {
             isTrackingRoute1 = it.getBooleanExtra("trackRoute1", false)
             isTrackingRoute2 = it.getBooleanExtra("trackRoute2", false)
             
-            Log.d("LocationService", "Tracking route1: $isTrackingRoute1, route2: $isTrackingRoute2")
+            // Verificar si es servicio de Mano Alzada
+            isManoAlzada = it.getBooleanExtra("isManoAlzada", false)
+            
+            // Si es Mano Alzada y estamos iniciando el servicio, no se rastrea la ruta1
+            if (isManoAlzada) {
+                isTrackingRoute1 = false
+                Log.d("LocationService", "Modo Mano Alzada activado - no se rastreará ruta1")
+            }
+            
+            Log.d("LocationService", "Tracking route1: $isTrackingRoute1, route2: $isTrackingRoute2, Mano Alzada: $isManoAlzada")
         }
         
         // Iniciar como servicio en primer plano
@@ -76,9 +86,15 @@ class LocationService : Service() {
             this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE
         )
         
+        val notificationText = if (isManoAlzada) {
+            "Rastreando servicio de Mano Alzada"
+        } else {
+            "Rastreando servicio de taxi"
+        }
+        
         val notification = NotificationCompat.Builder(this, channelId)
             .setContentTitle("SuperTaxi en funcionamiento")
-            .setContentText("Rastreando servicio de taxi")
+            .setContentText(notificationText)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentIntent(pendingIntent)
             .build()

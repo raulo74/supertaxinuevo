@@ -207,10 +207,12 @@ class MainActivity : AppCompatActivity() {
         
         viewModel.empezarEnabled.observe(this) { enabled ->
             binding.btnEmpezar.isEnabled = enabled
+            Log.d("MainActivity", "Estado del botón Empezar: $enabled")
         }
         
         viewModel.inicioServicioEnabled.observe(this) { enabled ->
             binding.btnInicioServicio.isEnabled = enabled
+            Log.d("MainActivity", "Estado del botón Inicio de Servicio: $enabled")
         }
         
         viewModel.finServicioEnabled.observe(this) { enabled ->
@@ -236,6 +238,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 } else {
                     viewModel.setTipoServicio(selected)
+                    Log.d("MainActivity", "Tipo de servicio seleccionado: $selected")
                 }
             }
             
@@ -244,10 +247,12 @@ class MainActivity : AppCompatActivity() {
         
         binding.btnEmpezar.setOnClickListener {
             viewModel.empezarServicio()
+            Log.d("MainActivity", "Botón Empezar pulsado")
         }
         
         binding.btnInicioServicio.setOnClickListener {
             viewModel.inicioServicio()
+            Log.d("MainActivity", "Botón Inicio de Servicio pulsado")
         }
         
         binding.btnFinServicio.setOnClickListener {
@@ -268,6 +273,8 @@ class MainActivity : AppCompatActivity() {
                 viewModel.setComision(comision)
                 viewModel.setTipoPago(tipoPago)
                 viewModel.finServicio()
+                
+                Log.d("MainActivity", "Botón Fin de Servicio pulsado")
             } catch (e: NumberFormatException) {
                 Toast.makeText(this, "Valor numérico inválido", Toast.LENGTH_SHORT).show()
             }
@@ -278,6 +285,7 @@ class MainActivity : AppCompatActivity() {
                 putExtra("SERVICIO_ID", viewModel.currentServicioId.value)
             }
             detalleActivityLauncher.launch(intent)
+            Log.d("MainActivity", "Botón Resumen de Servicio pulsado")
         }
     }
     
