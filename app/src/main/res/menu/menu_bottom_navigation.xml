@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_servicio"
+        android:icon="@drawable/ic_navigation"
+        android:title="Servicio" />
+    <item
+        android:id="@+id/nav_historial"
+        android:icon="@drawable/ic_clock"
+        android:title="Historial" />
+    <item
+        android:id="@+id/nav_ingresos"
+        android:icon="@drawable/ic_dollar_sign"
+        android:title="Ingresos" />
+    <item
+        android:id="@+id/nav_ajustes"
+        android:icon="@drawable/ic_settings"
+        android:title="Ajustes" />
+</menu> 

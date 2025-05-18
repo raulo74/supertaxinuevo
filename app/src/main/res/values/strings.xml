@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SuperTaxi</string>
+    <string name="empezar">Empezar</string>
+    <string name="inicio_de_servicio">Inicio de servicio</string>
+    <string name="fin_de_servicio">Fin de servicio</string>
+    <string name="resumen_de_servicio">Resumen de servicio</string>
+    <string name="importe">Importe</string>
+    <string name="comision">Comisión</string>
+    <string name="tipo_de_servicio">Tipo de Servicio</string>
+    <string name="tipo_de_pago">Tipo de Pago</string>
+    <string name="efectivo">Efectivo</string>
+    <string name="tarjeta">Tarjeta</string>
+    <string name="aplicacion">Aplicación</string>
+    <string name="parada_de_taxis">Parada de taxis</string>
+    <string name="mano_alzada">Mano Alzada</string>
+    <string name="dia">Día</string>
+    <string name="hora1">Hora de inicio</string>
+    <string name="hora2">Hora de recogida</string>
+    <string name="hora3">Hora de finalización</string>
+    <string name="km1">Km hasta recogida</string>
+    <string name="km2">Km del trayecto</string>
+    <string name="calle1">Origen de búsqueda</string>
+    <string name="calle2">Origen del trayecto</string>
+    <string name="calle3">Destino final</string>
+    <string name="porcentaje">Porcentaje de comisión</string>
+    <string name="minutos_totales">Minutos totales</string>
+    <string name="precio_hora">Precio por hora</string>
+    <string name="km_totales">Kilómetros totales</string>
+    <string name="precio_km">Precio por km</string>
+    <string name="siguiente_servicio">Siguiente servicio</string>
+    <string name="ingresar_tipo_servicio">Ingresar nuevo tipo de servicio</string>
+    <string name="aniadir">Añadir</string>
+    <string name="cancelar">Cancelar</string>
+    <string name="definir_apps_trabajo">Define las app con la que trabajas como por ejemplo (PideTaxi, Freenow, Joinup, uber, etc), asegúrate de ponerlas todas también con la que no trabajes y podrías volver a trabajar, de momento se podrán cambiar</string>
+</resources>
