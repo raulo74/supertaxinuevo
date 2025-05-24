@@ -56,4 +56,17 @@
     <string name="origen">Origen:</string>
     <string name="destino">Destino:</string>
     <string name="duracion">Duración:</string>
+
+    <!-- Strings para cancelación de servicio -->
+    <string name="servicio_en_progreso">Servicio en progreso</string>
+    <string name="cancelar_servicio_titulo">Cancelar servicio actual</string>
+    <string name="cancelar_servicio_mensaje">Hay un servicio en progreso.\n\n¿Quieres cancelar el servicio actual y volver al inicio?\n\n⚠️ Se perderán todos los datos del servicio actual (rutas, tiempos, etc.)</string>
+    <string name="aplicar_cambio_titulo">Aplicar cambio de tipo de servicio</string>
+    <string name="aplicar_cambio_mensaje">Has cambiado el tipo de servicio durante un servicio activo.\n\n¿Quieres cancelar el servicio actual y volver al inicio para usar el nuevo tipo de servicio?\n\n⚠️ Se perderán todos los datos del servicio actual (rutas, tiempos, etc.)</string>
+    <string name="si_cancelar_servicio">Sí, cancelar servicio</string>
+    <string name="si_aplicar_cambio">Sí, aplicar cambio</string>
+    <string name="no_continuar_servicio">No, continuar servicio</string>
+    <string name="salir_app">Salir de la app</string>
+    <string name="servicio_cancelado">Servicio cancelado. Puedes iniciar un nuevo servicio.</string>
+    <string name="tipo_servicio_cambiado">Tipo de servicio cambiado. Usa el botón atrás para aplicar el cambio.</string>
 </resources>

@@ -14,6 +14,7 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -112,6 +113,9 @@ class MainActivity : AppCompatActivity() {
             binding = ActivityMainBinding.inflate(layoutInflater)
             setContentView(binding.root)
             
+            // NUEVO: Configurar el manejo del botón de navegación hacia atrás
+            setupOnBackPressedCallback()
+            
             // Configurar la barra de navegación inferior
             setupBottomNavigation()
             
@@ -119,6 +123,97 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e("MainActivity", "Error en onCreate", e)
             Toast.makeText(this, "Error al iniciar la aplicación: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+    
+    // NUEVO MÉTODO: Configurar el callback para el botón de navegación hacia atrás
+    private fun setupOnBackPressedCallback() {
+        val callback = object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                Log.d("MainActivity", "Botón de navegación hacia atrás presionado")
+                
+                // Verificar si hay un servicio en progreso
+                if (viewModel.puedeVolverAtras()) {
+                    Log.d("MainActivity", "Hay un servicio en progreso, mostrando diálogo de confirmación")
+                    mostrarDialogoCancelarServicio()
+                } else {
+                    Log.d("MainActivity", "No hay servicio en progreso, comportamiento normal")
+                    // Comportamiento normal: cerrar la aplicación o minimizar
+                    finish()
+                }
+            }
+        }
+        onBackPressedDispatcher.addCallback(this, callback)
+    }
+    
+    // NUEVO MÉTODO: Mostrar diálogo para confirmar cancelación del servicio
+    private fun mostrarDialogoCancelarServicio() {
+        val tipoServicioCambio = viewModel.tipoServicioHaCambiado()
+        
+        val titulo = if (tipoServicioCambio) {
+            getString(R.string.aplicar_cambio_titulo)
+        } else {
+            getString(R.string.cancelar_servicio_titulo)
+        }
+        
+        val mensaje = if (tipoServicioCambio) {
+            getString(R.string.aplicar_cambio_mensaje)
+        } else {
+            getString(R.string.cancelar_servicio_mensaje)
+        }
+        
+        val botonPositivo = if (tipoServicioCambio) {
+            getString(R.string.si_aplicar_cambio)
+        } else {
+            getString(R.string.si_cancelar_servicio)
+        }
+        
+        MaterialAlertDialogBuilder(this)
+            .setTitle(titulo)
+            .setMessage(mensaje)
+            .setPositiveButton(botonPositivo) { _, _ ->
+                Log.d("MainActivity", "Usuario confirmó cancelación del servicio")
+                cancelarServicioYReiniciar()
+            }
+            .setNegativeButton(getString(R.string.no_continuar_servicio)) { dialog, _ ->
+                Log.d("MainActivity", "Usuario canceló la cancelación del servicio")
+                dialog.dismiss()
+            }
+            .setNeutralButton(getString(R.string.salir_app)) { _, _ ->
+                Log.d("MainActivity", "Usuario eligió salir de la aplicación")
+                finish()
+            }
+            .setCancelable(false) // No permitir cancelar tocando fuera del diálogo
+            .show()
+    }
+    
+    // NUEVO MÉTODO: Cancelar servicio y reiniciar la aplicación
+    private fun cancelarServicioYReiniciar() {
+        Log.d("MainActivity", "Iniciando cancelación y reinicio del servicio")
+        
+        try {
+            // Cancelar el servicio actual en el ViewModel
+            viewModel.cancelarServicioActual()
+            
+            // Reiniciar la UI
+            resetUI()
+            
+            // Mostrar confirmación al usuario
+            Toast.makeText(
+                this,
+                getString(R.string.servicio_cancelado),
+                Toast.LENGTH_LONG
+            ).show()
+            
+            Log.d("MainActivity", "Cancelación y reinicio completados exitosamente")
+            
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error durante la cancelación del servicio", e)
+            Toast.makeText(
+                this,
+                "Error al cancelar el servicio: ${e.message}",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
     
@@ -131,8 +226,21 @@ class MainActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_historial -> {
-                    val intent = Intent(this, ResumenActivity::class.java)
-                    startActivity(intent)
+                    // Verificar si hay un servicio en progreso antes de navegar
+                    if (viewModel.puedeVolverAtras()) {
+                        MaterialAlertDialogBuilder(this)
+                            .setTitle(getString(R.string.servicio_en_progreso))
+                            .setMessage(getString(R.string.cancelar_servicio_mensaje))
+                            .setPositiveButton(getString(R.string.si_cancelar_servicio)) { _, _ ->
+                                val intent = Intent(this, ResumenActivity::class.java)
+                                startActivity(intent)
+                            }
+                            .setNegativeButton(getString(R.string.no_continuar_servicio), null)
+                            .show()
+                    } else {
+                        val intent = Intent(this, ResumenActivity::class.java)
+                        startActivity(intent)
+                    }
                     true
                 }
                 R.id.nav_ingresos -> {
@@ -140,9 +248,21 @@ class MainActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_ajustes -> {
-                    // Navegar a la pantalla de ajustes
-                    val intent = Intent(this, SettingsActivity::class.java)
-                    startActivity(intent)
+                    // Verificar si hay un servicio en progreso antes de navegar
+                    if (viewModel.puedeVolverAtras()) {
+                        MaterialAlertDialogBuilder(this)
+                            .setTitle(getString(R.string.servicio_en_progreso))
+                            .setMessage(getString(R.string.cancelar_servicio_mensaje))
+                            .setPositiveButton(getString(R.string.si_cancelar_servicio)) { _, _ ->
+                                val intent = Intent(this, SettingsActivity::class.java)
+                                startActivity(intent)
+                            }
+                            .setNegativeButton(getString(R.string.no_continuar_servicio), null)
+                            .show()
+                    } else {
+                        val intent = Intent(this, SettingsActivity::class.java)
+                        startActivity(intent)
+                    }
                     true
                 }
                 else -> false
@@ -266,6 +386,40 @@ class MainActivity : AppCompatActivity() {
                     binding.spinnerTipoServicio.setSelection(indexParadaTaxis)
                     viewModel.setTipoServicio("Parada de taxis")
                 }
+            }
+        }
+        
+        // NUEVO OBSERVER: Observar cambios en el tipo de servicio durante un servicio activo
+        viewModel.tipoServicioCambiado.observe(this) { cambiado ->
+            if (cambiado) {
+                // Cambiar el color de fondo del spinner para indicar que hay un cambio pendiente
+                binding.spinnerTipoServicio.setBackgroundColor(
+                    ContextCompat.getColor(this, R.color.colorRed)
+                )
+                
+                // Mostrar un mensaje sutil al usuario
+                Toast.makeText(
+                    this,
+                    getString(R.string.tipo_servicio_cambiado),
+                    Toast.LENGTH_LONG
+                ).show()
+            } else {
+                // Restaurar el color normal del spinner
+                binding.spinnerTipoServicio.setBackgroundColor(
+                    ContextCompat.getColor(this, android.R.color.transparent)
+                )
+            }
+        }
+        
+        // NUEVO OBSERVER: Observar el estado del servicio en progreso
+        viewModel.servicioEnProgreso.observe(this) { enProgreso ->
+            Log.d("MainActivity", "Servicio en progreso: $enProgreso")
+            
+            // Opcional: Cambiar el título de la toolbar para indicar el estado
+            if (enProgreso) {
+                supportActionBar?.title = "SuperTaxi - Servicio en curso"
+            } else {
+                supportActionBar?.title = "SuperTaxi"
             }
         }
         
@@ -516,6 +670,11 @@ class MainActivity : AppCompatActivity() {
         binding.editComision.error = null
         binding.spinnerTipoPago.setSelection(0)
         
+        // Restaurar el color normal del spinner
+        binding.spinnerTipoServicio.setBackgroundColor(
+            ContextCompat.getColor(this, android.R.color.transparent)
+        )
+        
         // Establecer "Parada de taxis" en el spinner
         val adapter = binding.spinnerTipoServicio.adapter
         if (adapter != null) {
@@ -540,6 +699,9 @@ class MainActivity : AppCompatActivity() {
         binding.tvTiempoHastaCliente.text = "0 min"
         binding.tvTiempoServicio.text = "0 min"
         binding.routeStatusText.text = ""
+        
+        // Restaurar título normal
+        supportActionBar?.title = "SuperTaxi"
         
         Log.d("MainActivity", "UI reiniciada con Parada de taxis como predeterminado")
     }
