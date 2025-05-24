@@ -70,4 +70,14 @@
     <string name="servicio_cancelado">Servicio cancelado. Puedes iniciar un nuevo servicio.</string>
     <string name="tipo_servicio_cambiado">Tipo de servicio cambiado. Usa el botón atrás para aplicar el cambio.</string>
     <string name="ver_resumen">Ver Resumen</string>
+
+    <!-- Strings para el historial de servicios -->
+    <string name="historial_servicios">Historial de Servicios</string>
+    <string name="ingresos_estadisticas">Ingresos y Estadísticas</string>
+    <string name="estadisticas_periodo">Estadísticas del Período</string>
+    <string name="datos_promedio">Datos Promedio</string>
+    <string name="ingreso_promedio_servicio">Ingreso promedio por servicio:</string>
+    <string name="km_promedio_servicio">Km promedio por servicio:</string>
+    <string name="tiempo_promedio_servicio">Tiempo promedio por servicio:</string>
+    <string name="sin_datos_estadisticas">No hay datos para mostrar estadísticas</string>
 </resources>

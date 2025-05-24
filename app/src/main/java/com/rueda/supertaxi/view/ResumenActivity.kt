@@ -15,7 +15,6 @@ import com.rueda.supertaxi.databinding.ActivityResumenBinding
 import com.rueda.supertaxi.model.Servicio
 import com.rueda.supertaxi.viewmodel.FiltroTiempo
 import com.rueda.supertaxi.viewmodel.ResumenViewModel
-import java.text.DecimalFormat
 
 class ResumenActivity : AppCompatActivity() {
     private lateinit var binding: ActivityResumenBinding
@@ -108,21 +107,6 @@ class ResumenActivity : AppCompatActivity() {
                 binding.tvNoData.visibility = View.GONE
                 binding.recyclerServicios.visibility = View.VISIBLE
             }
-        }
-        
-        // Observar estadísticas
-        viewModel.cantidadServicios.observe(this) { cantidad ->
-            binding.tvTotalServicios.text = cantidad.toString()
-        }
-        
-        viewModel.totalIngresos.observe(this) { ingresos ->
-            val decimalFormat = DecimalFormat("#,##0.00")
-            binding.tvTotalIngresos.text = "${decimalFormat.format(ingresos)}€"
-        }
-        
-        viewModel.totalKilometros.observe(this) { kilometros ->
-            val decimalFormat = DecimalFormat("#,##0.0")
-            binding.tvTotalKm.text = "${decimalFormat.format(kilometros)}km"
         }
     }
     

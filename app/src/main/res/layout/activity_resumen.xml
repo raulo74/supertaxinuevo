@@ -18,7 +18,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/resumen_servicios"
+            android:text="@string/historial_servicios"
             android:textColor="@android:color/white"
             android:textSize="20sp"
             android:textStyle="bold" />
@@ -86,113 +86,6 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:padding="8dp">
-
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/cardEstadisticas"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="2dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="16dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:baselineAligned="false">
-
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:orientation="vertical"
-                                android:layout_margin="4dp"
-                                android:padding="8dp"
-                                android:background="@color/colorBlueLight"
-                                android:gravity="center"
-                                android:layout_gravity="center_vertical">
-
-                                <TextView
-                                    android:id="@+id/tvTotalServicios"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:textSize="18sp"
-                                    android:textStyle="bold"
-                                    android:textColor="@color/colorPrimary"
-                                    tools:text="8" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/servicios"
-                                    android:textSize="12sp"
-                                    android:textColor="@color/colorTextSecondary" />
-                            </LinearLayout>
-
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:orientation="vertical"
-                                android:layout_margin="4dp"
-                                android:padding="8dp"
-                                android:background="@color/colorBlueLight"
-                                android:gravity="center"
-                                android:layout_gravity="center_vertical">
-
-                                <TextView
-                                    android:id="@+id/tvTotalIngresos"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:textSize="18sp"
-                                    android:textStyle="bold"
-                                    android:textColor="@color/colorPrimary"
-                                    tools:text="83.4€" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/ingresos"
-                                    android:textSize="12sp"
-                                    android:textColor="@color/colorTextSecondary" />
-                            </LinearLayout>
-
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:orientation="vertical"
-                                android:layout_margin="4dp"
-                                android:padding="8dp"
-                                android:background="@color/colorBlueLight"
-                                android:gravity="center"
-                                android:layout_gravity="center_vertical">
-
-                                <TextView
-                                    android:id="@+id/tvTotalKm"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:textSize="18sp"
-                                    android:textStyle="bold"
-                                    android:textColor="@color/colorPrimary"
-                                    tools:text="87.9km" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/recorrido"
-                                    android:textSize="12sp"
-                                    android:textColor="@color/colorTextSecondary" />
-                            </LinearLayout>
-                        </LinearLayout>
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
 
                 <TextView
                     android:id="@+id/tvFiltroAplicado"
