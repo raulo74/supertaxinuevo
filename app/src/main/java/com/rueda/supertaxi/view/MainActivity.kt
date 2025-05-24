@@ -585,17 +585,19 @@ class MainActivity : AppCompatActivity() {
             val comisionStr = binding.editComision.text.toString()
             val tipoPago = binding.spinnerTipoPago.selectedItem.toString()
             
-            // Validar datos
-            if (importeStr.isBlank() || comisionStr.isBlank()) {
-                // Utilizamos Material Design para el mensaje de error
-                binding.editImporte.error = if (importeStr.isBlank()) "Campo requerido" else null
-                binding.editComision.error = if (comisionStr.isBlank()) "Campo requerido" else null
+            // Validar solo el importe (la comisión puede estar vacía)
+            if (importeStr.isBlank()) {
+                binding.editImporte.error = "Campo requerido"
                 return@setOnClickListener
             }
             
             try {
                 val importe = importeStr.toDouble()
-                val comision = comisionStr.toDouble()
+                // Si la comisión está vacía, usar 0.0
+                val comision = if (comisionStr.isBlank()) 0.0 else comisionStr.toDouble()
+                
+                // Limpiar cualquier error previo en el campo comisión
+                binding.editComision.error = null
                 
                 viewModel.setImporte(importe)
                 viewModel.setComision(comision)
@@ -607,7 +609,7 @@ class MainActivity : AppCompatActivity() {
             } catch (e: NumberFormatException) {
                 MaterialAlertDialogBuilder(this)
                     .setTitle("Error de formato")
-                    .setMessage("Los valores de importe y comisión deben ser números válidos")
+                    .setMessage("El valor del importe debe ser un número válido")
                     .setPositiveButton("Entendido", null)
                     .show()
             }

@@ -279,7 +279,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             // Calcular porcentaje de comisión
             val importeVal = _importe.value ?: 0.0
             val comisionVal = _comision.value ?: 0.0
-            if (importeVal + comisionVal > 0) {
+
+            // Manejar el caso cuando la comisión es 0
+            if (comisionVal == 0.0) {
+                _porcentaje.value = 0.0
+            } else if (importeVal + comisionVal > 0) {
                 _porcentaje.value = (comisionVal * 100) / (comisionVal + importeVal)
             } else {
                 _porcentaje.value = 0.0

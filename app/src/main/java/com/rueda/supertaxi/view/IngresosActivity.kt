@@ -5,7 +5,9 @@ import android.util.Log
 import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.rueda.supertaxi.adapter.IngresosPorTipoAdapter
 import com.rueda.supertaxi.databinding.ActivityIngresosBinding
 import com.rueda.supertaxi.viewmodel.FiltroTiempo
 import com.rueda.supertaxi.viewmodel.ResumenViewModel
@@ -14,6 +16,7 @@ import java.text.DecimalFormat
 class IngresosActivity : AppCompatActivity() {
     private lateinit var binding: ActivityIngresosBinding
     private val viewModel: ResumenViewModel by viewModels()
+    private lateinit var ingresosPorTipoAdapter: IngresosPorTipoAdapter
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,6 +26,7 @@ class IngresosActivity : AppCompatActivity() {
         Log.d("IngresosActivity", "onCreate iniciado")
         
         setupToolbar()
+        setupRecyclerView()
         setupChipGroup()
         setupObservers()
         setupListeners()
@@ -38,6 +42,19 @@ class IngresosActivity : AppCompatActivity() {
         
         binding.toolbar.setNavigationOnClickListener {
             onBackPressed()
+        }
+    }
+    
+    private fun setupRecyclerView() {
+        ingresosPorTipoAdapter = IngresosPorTipoAdapter()
+        binding.recyclerIngresosPorTipo.apply {
+            layoutManager = LinearLayoutManager(this@IngresosActivity)
+            adapter = ingresosPorTipoAdapter
+            setHasFixedSize(true)
+            Log.d("IngresosActivity", "RecyclerView configurado")
+            
+            // Forzar la actualización del layout
+            requestLayout()
         }
     }
     
@@ -90,10 +107,12 @@ class IngresosActivity : AppCompatActivity() {
             if (cantidad == 0) {
                 binding.tvNoData.visibility = View.VISIBLE
                 binding.cardEstadisticas.visibility = View.GONE
+                binding.cardIngresosPorTipo.visibility = View.GONE
                 Log.d("IngresosActivity", "No hay servicios - mostrando mensaje")
             } else {
                 binding.tvNoData.visibility = View.GONE
                 binding.cardEstadisticas.visibility = View.VISIBLE
+                binding.cardIngresosPorTipo.visibility = View.VISIBLE
                 Log.d("IngresosActivity", "Hay servicios - mostrando estadísticas")
             }
         }
@@ -106,6 +125,57 @@ class IngresosActivity : AppCompatActivity() {
         viewModel.totalKilometros.observe(this) { kilometros ->
             Log.d("IngresosActivity", "Total kilómetros: $kilometros")
             binding.tvTotalKm.text = "${decimalFormatKm.format(kilometros)}km"
+        }
+        
+        // Observar ingresos por tipo
+        viewModel.ingresosPorTipoServicio.observe(this) { ingresosPorTipo ->
+            Log.d("IngresosActivity", "Ingresos por tipo recibidos: ${ingresosPorTipo.size} tipos")
+            Log.d("IngresosActivity", "Contenido del mapa: $ingresosPorTipo")
+            
+            if (ingresosPorTipo.isNotEmpty()) {
+                // Convertir el mapa a lista de pares para el adapter
+                val listaIngresos = ingresosPorTipo.entries.map { entry ->
+                    Pair(entry.key, entry.value)
+                }.sortedByDescending { it.second } // Ordenar por ingresos de mayor a menor
+                
+                Log.d("IngresosActivity", "Lista de ingresos a enviar al adapter: $listaIngresos")
+                ingresosPorTipoAdapter.submitList(listaIngresos) {
+                    Log.d("IngresosActivity", "Lista actualizada en el adapter")
+                    binding.recyclerIngresosPorTipo.requestLayout()
+                }
+                
+                // Log para debug
+                listaIngresos.forEach { (tipo, total) ->
+                    Log.d("IngresosActivity", "Tipo: $tipo, Total: $total")
+                }
+            } else {
+                Log.d("IngresosActivity", "No hay ingresos por tipo para mostrar")
+                ingresosPorTipoAdapter.submitList(emptyList()) {
+                    Log.d("IngresosActivity", "Lista vacía actualizada en el adapter")
+                    binding.recyclerIngresosPorTipo.requestLayout()
+                }
+            }
+        }
+        
+        // Observar estadísticas por tipo
+        viewModel.estadisticasPorTipo.observe(this) { estadisticas ->
+            Log.d("IngresosActivity", "Estadísticas por tipo recibidas: ${estadisticas.size} tipos")
+            
+            if (estadisticas.isNotEmpty()) {
+                // Log para debug
+                estadisticas.forEach { estadistica ->
+                    Log.d("IngresosActivity", """
+                        Tipo: ${estadistica.tipoServicio}
+                        Cantidad: ${estadistica.cantidadServicios}
+                        Total Ingresos: ${estadistica.totalIngresos}
+                        Total Km: ${estadistica.totalKilometros}
+                        Promedio Ingresos: ${estadistica.ingresoPromedio}
+                        Promedio Km: ${estadistica.kmPromedio}
+                    """.trimIndent())
+                }
+            } else {
+                Log.d("IngresosActivity", "No hay estadísticas por tipo para mostrar")
+            }
         }
         
         // Observar datos para calcular promedios

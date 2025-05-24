@@ -1,6 +1,7 @@
 package com.rueda.supertaxi.viewmodel
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -13,12 +14,21 @@ import com.rueda.supertaxi.model.Servicio
 import com.rueda.supertaxi.repository.ServicioRepository
 import kotlinx.coroutines.launch
 import java.time.LocalDate
-import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
 
 enum class FiltroTiempo {
     HOY, SEMANA, MES, TODO
 }
+
+// Clase para estadísticas por tipo de servicio
+data class EstadisticaTipoServicio(
+    val tipoServicio: String,
+    val cantidadServicios: Int,
+    val totalIngresos: Double,
+    val totalKilometros: Double,
+    val ingresoPromedio: Double,
+    val kmPromedio: Double
+)
 
 class ResumenViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: ServicioRepository
@@ -32,6 +42,12 @@ class ResumenViewModel(application: Application) : AndroidViewModel(application)
     val cantidadServicios: LiveData<Int>
     val totalIngresos: LiveData<Double>
     val totalKilometros: LiveData<Double>
+    
+    // Estadísticas por tipo de servicio
+    val estadisticasPorTipo: LiveData<List<EstadisticaTipoServicio>>
+    
+    // Ingresos por tipo de servicio
+    val ingresosPorTipoServicio: LiveData<Map<String, Double>>
     
     init {
         val database = AppDatabase.getDatabase(application)
@@ -49,19 +65,54 @@ class ResumenViewModel(application: Application) : AndroidViewModel(application)
         }
         
         totalIngresos = serviciosFiltrados.map { servicios ->
-            var total = 0.0
-            for (servicio in servicios) {
-                total += servicio.importe
-            }
-            total
+            servicios.sumOf { it.importe }
         }
         
         totalKilometros = serviciosFiltrados.map { servicios ->
-            var total = 0.0
-            for (servicio in servicios) {
-                total += servicio.kmTotales
+            servicios.sumOf { it.kmTotales }
+        }
+        
+        // Calcular estadísticas por tipo de servicio
+        estadisticasPorTipo = serviciosFiltrados.map { servicios ->
+            if (servicios.isEmpty()) {
+                emptyList()
+            } else {
+                servicios.groupBy { it.tipoServicio }
+                    .map { (tipoServicio, serviciosDelTipo) ->
+                        val cantidadServicios = serviciosDelTipo.size
+                        val totalIngresos = serviciosDelTipo.sumOf { it.importe }
+                        val totalKilometros = serviciosDelTipo.sumOf { it.kmTotales }
+                        val ingresoPromedio = if (cantidadServicios > 0) totalIngresos / cantidadServicios else 0.0
+                        val kmPromedio = if (cantidadServicios > 0) totalKilometros / cantidadServicios else 0.0
+                        
+                        EstadisticaTipoServicio(
+                            tipoServicio = tipoServicio,
+                            cantidadServicios = cantidadServicios,
+                            totalIngresos = totalIngresos,
+                            totalKilometros = totalKilometros,
+                            ingresoPromedio = ingresoPromedio,
+                            kmPromedio = kmPromedio
+                        )
+                    }
+                    .sortedByDescending { it.totalIngresos }
             }
-            total
+        }
+        
+        // Calcular ingresos por tipo de servicio
+        ingresosPorTipoServicio = serviciosFiltrados.map { servicios ->
+            Log.d("ResumenViewModel", "Calculando ingresos por tipo para ${servicios.size} servicios")
+            
+            if (servicios.isEmpty()) {
+                Log.d("ResumenViewModel", "No hay servicios para calcular ingresos por tipo")
+                emptyMap()
+            } else {
+                val ingresosPorTipo = servicios.groupBy { it.tipoServicio }
+                    .mapValues { (_, serviciosDelTipo) ->
+                        serviciosDelTipo.sumOf { it.importe }
+                    }
+                Log.d("ResumenViewModel", "Ingresos por tipo calculados: $ingresosPorTipo")
+                ingresosPorTipo
+            }
         }
     }
     
