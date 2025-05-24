@@ -33,6 +33,8 @@ class ResumenViewModel(application: Application) : AndroidViewModel(application)
     val totalIngresos: LiveData<Double>
     val totalKilometros: LiveData<Double>
     
+    val ingresosPorTipoServicio: LiveData<Map<String, Double>>
+    
     init {
         val database = AppDatabase.getDatabase(application)
         repository = ServicioRepository(database.servicioDao(), application.applicationContext)
@@ -62,6 +64,13 @@ class ResumenViewModel(application: Application) : AndroidViewModel(application)
                 total += servicio.kmTotales
             }
             total
+        }
+        
+        ingresosPorTipoServicio = serviciosFiltrados.map { servicios ->
+            servicios.groupBy { it.tipoServicio }
+                .mapValues { (_, serviciosDelTipo) ->
+                    serviciosDelTipo.sumOf { it.importe }
+                }
         }
     }
     

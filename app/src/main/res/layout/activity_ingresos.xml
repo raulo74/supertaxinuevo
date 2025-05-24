@@ -87,7 +87,7 @@
                 android:orientation="vertical"
                 android:padding="8dp">
 
-                <!-- TARJETA DE ESTADÍSTICAS -->
+                <!-- TARJETA DE ESTADÍSTICAS GENERALES -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/cardEstadisticas"
                     android:layout_width="match_parent"
@@ -202,6 +202,40 @@
                                     android:textColor="@color/colorTextSecondary" />
                             </LinearLayout>
                         </LinearLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- NUEVA TARJETA: INGRESOS POR TIPO DE SERVICIO -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardIngresosPorTipo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="2dp"
+                    app:cardBackgroundColor="@color/colorCardBackground">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/ingresos_por_tipo_servicio"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/colorTextPrimary"
+                            android:layout_marginBottom="16dp" />
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/recyclerIngresosPorTipo"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:nestedScrollingEnabled="false"
+                            tools:listitem="@layout/item_ingreso_por_tipo" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 

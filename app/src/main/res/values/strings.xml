@@ -6,7 +6,7 @@
     <string name="fin_de_servicio">Fin de servicio</string>
     <string name="resumen_de_servicio">Resumen de servicio</string>
     <string name="importe">Importe</string>
-    <string name="comision">Comisión</string>
+    <string name="comision">Comisión (opcional)</string>
     <string name="tipo_de_servicio">Tipo de Servicio</string>
     <string name="tipo_de_pago">Tipo de Pago</string>
     <string name="efectivo">Efectivo</string>
@@ -80,4 +80,7 @@
     <string name="km_promedio_servicio">Km promedio por servicio:</string>
     <string name="tiempo_promedio_servicio">Tiempo promedio por servicio:</string>
     <string name="sin_datos_estadisticas">No hay datos para mostrar estadísticas</string>
+
+    <!-- Strings para ingresos por tipo de servicio -->
+    <string name="ingresos_por_tipo_servicio">Ingresos por Tipo de Servicio</string>
 </resources>
