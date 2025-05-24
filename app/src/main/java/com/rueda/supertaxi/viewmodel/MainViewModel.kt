@@ -33,6 +33,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _tipoServicio = MutableLiveData<String>()
     val tipoServicio: LiveData<String> = _tipoServicio
 
+    // NUEVA VARIABLE: Para trackear si hay un servicio en progreso
+    private val _servicioEnProgreso = MutableLiveData<Boolean>(false)
+    val servicioEnProgreso: LiveData<Boolean> = _servicioEnProgreso
+
+    // NUEVA VARIABLE: Para trackear si el tipo de servicio cambió durante el servicio
+    private val _tipoServicioCambiado = MutableLiveData<Boolean>(false)
+    val tipoServicioCambiado: LiveData<Boolean> = _tipoServicioCambiado
+
+    // Variable para guardar el tipo de servicio original cuando se inició
+    private var tipoServicioOriginal: String = ""
+
     private val _dia = MutableLiveData<LocalDate>()
     val dia: LiveData<LocalDate> = _dia
 
@@ -121,32 +132,52 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     // Métodos para interacción con la UI
     fun setTipoServicio(tipo: String) {
+        Log.d("MainViewModel", "setTipoServicio llamado con: $tipo")
+        
+        // Si hay un servicio en progreso y el tipo es diferente al original
+        if (_servicioEnProgreso.value == true && tipo != tipoServicioOriginal) {
+            Log.d("MainViewModel", "Tipo de servicio cambiado durante servicio activo: $tipoServicioOriginal -> $tipo")
+            _tipoServicioCambiado.value = true
+        } else {
+            _tipoServicioCambiado.value = false
+        }
+        
         _tipoServicio.value = tipo
         
-        // Lógica especial para tipo "Mano Alzada"
-        if (tipo == "Mano Alzada") {
-            // Para Mano Alzada, bloqueamos Empezar y habilitamos directamente Inicio de servicio
-            _empezarEnabled.value = false
-            _inicioServicioEnabled.value = true
-            _finServicioEnabled.value = false
-            _resumenEnabled.value = false
-            
-            // Establecer fecha y hora de inicio automáticamente
-            _dia.value = LocalDate.now()
-            _hora1.value = LocalTime.now()
-            
-            // No iniciamos tracking para ruta1 en este caso
-            _ruta1.value = mutableListOf()
-        } else {
-            // Para el resto de tipos de servicio, seguimos el flujo normal
-            _empezarEnabled.value = true
-            _inicioServicioEnabled.value = false
-            _finServicioEnabled.value = false
-            _resumenEnabled.value = false
+        // Solo cambiar el estado de los botones si NO hay un servicio en progreso
+        if (_servicioEnProgreso.value != true) {
+            // Lógica especial para tipo "Mano Alzada"
+            if (tipo == "Mano Alzada") {
+                // Para Mano Alzada, bloqueamos Empezar y habilitamos directamente Inicio de servicio
+                _empezarEnabled.value = false
+                _inicioServicioEnabled.value = true
+                _finServicioEnabled.value = false
+                _resumenEnabled.value = false
+                
+                // Establecer fecha y hora de inicio automáticamente
+                _dia.value = LocalDate.now()
+                _hora1.value = LocalTime.now()
+                
+                // No iniciamos tracking para ruta1 en este caso
+                _ruta1.value = mutableListOf()
+            } else {
+                // Para el resto de tipos de servicio, seguimos el flujo normal
+                _empezarEnabled.value = true
+                _inicioServicioEnabled.value = false
+                _finServicioEnabled.value = false
+                _resumenEnabled.value = false
+            }
         }
     }
 
     fun empezarServicio() {
+        Log.d("MainViewModel", "empezarServicio iniciado")
+        
+        // Marcar que hay un servicio en progreso
+        _servicioEnProgreso.value = true
+        tipoServicioOriginal = _tipoServicio.value ?: ""
+        _tipoServicioCambiado.value = false
+        
         _dia.value = LocalDate.now()
         _hora1.value = LocalTime.now()
         
@@ -167,6 +198,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _inicioServicioEnabled.value = true
         _finServicioEnabled.value = false
         _resumenEnabled.value = false
+        
+        Log.d("MainViewModel", "Servicio marcado como en progreso")
     }
 
     fun inicioServicio() {
@@ -192,17 +225,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _hora3.value = LocalTime.now()
         
         // Detener tracking de ubicación
-        val intent = Intent(getApplication(), LocationService::class.java).apply {
-            putExtra("trackRoute1", false)
-            putExtra("trackRoute2", false)
-        }
-        getApplication<Application>().startService(intent)
+        detenerServicioUbicacion()
         
         // Calcular datos finales
         calcularDatosFinales()
         
         // Guardar en base de datos y CSV
         guardarServicio()
+        
+        // Marcar que el servicio ya no está en progreso
+        _servicioEnProgreso.value = false
+        _tipoServicioCambiado.value = false
         
         // Actualizar estado de botones
         _empezarEnabled.value = false
@@ -351,6 +384,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         
         // Reiniciar variables del servicio
         _tipoServicio.value = ""
+        _servicioEnProgreso.value = false
+        _tipoServicioCambiado.value = false
+        tipoServicioOriginal = ""
         _dia.value = LocalDate.now()
         _hora1.value = LocalTime.now()
         _hora2.value = LocalTime.now()
@@ -390,5 +426,35 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun getServicioActual(): Servicio? {
         return servicioActual
+    }
+
+    // NUEVO MÉTODO: Para detener el servicio de ubicación
+    private fun detenerServicioUbicacion() {
+        Log.d("MainViewModel", "Deteniendo servicio de ubicación")
+        val intent = Intent(getApplication(), LocationService::class.java)
+        getApplication<Application>().stopService(intent)
+    }
+
+    // NUEVO MÉTODO: Para cancelar el servicio actual
+    fun cancelarServicioActual() {
+        Log.d("MainViewModel", "Cancelando servicio actual")
+        
+        // Detener cualquier tracking de ubicación activo
+        detenerServicioUbicacion()
+        
+        // Resetear todas las variables al estado inicial
+        resetVariables()
+        
+        Log.d("MainViewModel", "Servicio cancelado y variables reseteadas")
+    }
+
+    // NUEVO MÉTODO: Para verificar si se puede volver atrás
+    fun puedeVolverAtras(): Boolean {
+        return _servicioEnProgreso.value == true
+    }
+
+    // NUEVO MÉTODO: Para verificar si el tipo de servicio cambió
+    fun tipoServicioHaCambiado(): Boolean {
+        return _tipoServicioCambiado.value == true
     }
 }
