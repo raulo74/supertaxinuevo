@@ -58,6 +58,11 @@
             android:exported="false"
             android:screenOrientation="portrait" />
             
+        <activity
+            android:name=".view.SettingsActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+            
         <service
             android:name=".util.LocationService"
             android:enabled="true"

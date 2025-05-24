@@ -28,6 +28,7 @@ import com.rueda.supertaxi.databinding.ActivityMainBinding
 import com.rueda.supertaxi.model.TipoServicio
 import com.rueda.supertaxi.util.LocationService
 import com.rueda.supertaxi.viewmodel.MainViewModel
+import androidx.appcompat.app.AppCompatDelegate
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -86,6 +87,26 @@ class MainActivity : AppCompatActivity() {
     }
     
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Aplicar el tema guardado antes de super.onCreate()
+        val prefs = getSharedPreferences(SettingsActivity.PREFS_NAME, Context.MODE_PRIVATE)
+        val darkMode = prefs.getInt(SettingsActivity.KEY_DARK_MODE, SettingsActivity.DARK_MODE_AUTO)
+        
+        when (darkMode) {
+            SettingsActivity.DARK_MODE_AUTO -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+                } else {
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_AUTO_BATTERY)
+                }
+            }
+            SettingsActivity.DARK_MODE_DAY -> {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+            }
+            SettingsActivity.DARK_MODE_NIGHT -> {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+            }
+        }
+        
         super.onCreate(savedInstanceState)
         try {
             binding = ActivityMainBinding.inflate(layoutInflater)
@@ -102,7 +123,6 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun setupBottomNavigation() {
-        // Asumiendo que has añadido un BottomNavigationView en tu layout
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
         bottomNav?.setOnItemSelectedListener { item ->
             when (item.itemId) {
@@ -111,19 +131,18 @@ class MainActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_historial -> {
-                    // Navegar a la pantalla de resumen
                     val intent = Intent(this, ResumenActivity::class.java)
                     startActivity(intent)
                     true
                 }
                 R.id.nav_ingresos -> {
-                    // Implementar navegación a ingresos
                     Toast.makeText(this, "Ingresos - Funcionalidad pendiente", Toast.LENGTH_SHORT).show()
                     true
                 }
                 R.id.nav_ajustes -> {
-                    // Implementar navegación a ajustes
-                    Toast.makeText(this, "Ajustes - Funcionalidad pendiente", Toast.LENGTH_SHORT).show()
+                    // Navegar a la pantalla de ajustes
+                    val intent = Intent(this, SettingsActivity::class.java)
+                    startActivity(intent)
                     true
                 }
                 else -> false

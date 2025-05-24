@@ -17,4 +17,7 @@ interface ServicioDao {
     
     @Delete
     suspend fun deleteServicio(servicio: Servicio)
+    
+    @Query("DELETE FROM servicio")
+    suspend fun deleteAllServicios()
 } 

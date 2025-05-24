@@ -14,4 +14,7 @@ interface TipoServicioDao {
     
     @Delete
     suspend fun deleteTipoServicio(tipoServicio: TipoServicio)
+    
+    @Query("DELETE FROM tipo_servicio WHERE predefinido = 0")
+    suspend fun deleteNonPredefinedTipos()
 } 
