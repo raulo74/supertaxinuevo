@@ -42,6 +42,7 @@
                 android:layout_height="wrap_content"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="2dp"
+                app:cardBackgroundColor="@color/colorCardBackground"
                 app:layout_constraintTop_toTopOf="parent">
 
                 <LinearLayout
@@ -58,11 +59,15 @@
                         android:textSize="16sp"
                         android:textStyle="bold" />
 
-                    <com.google.android.material.textfield.TextInputLayout
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                    <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="16dp">
+                        android:layout_marginBottom="16dp"
+                        app:cardCornerRadius="8dp"
+                        app:cardElevation="0dp"
+                        app:cardBackgroundColor="@color/colorSpinnerBackground"
+                        app:strokeColor="@color/colorBorder"
+                        app:strokeWidth="1dp">
 
                         <Spinner
                             android:id="@+id/spinnerTipoServicio"
@@ -70,8 +75,9 @@
                             android:layout_height="wrap_content"
                             android:minHeight="56dp"
                             android:paddingStart="12dp"
-                            android:paddingEnd="12dp" />
-                    </com.google.android.material.textfield.TextInputLayout>
+                            android:paddingEnd="12dp"
+                            android:background="@android:color/transparent" />
+                    </com.google.android.material.card.MaterialCardView>
 
                     <Button
                         android:id="@+id/btnEmpezar"
@@ -164,11 +170,15 @@
                             android:textSize="16sp"
                             android:textStyle="bold" />
 
-                        <com.google.android.material.textfield.TextInputLayout
-                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                        <com.google.android.material.card.MaterialCardView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginBottom="12dp">
+                            android:layout_marginBottom="12dp"
+                            app:cardCornerRadius="8dp"
+                            app:cardElevation="0dp"
+                            app:cardBackgroundColor="@color/colorSpinnerBackground"
+                            app:strokeColor="@color/colorBorder"
+                            app:strokeWidth="1dp">
 
                             <Spinner
                                 android:id="@+id/spinnerTipoPago"
@@ -177,8 +187,9 @@
                                 android:enabled="false"
                                 android:minHeight="56dp"
                                 android:paddingStart="12dp"
-                                android:paddingEnd="12dp" />
-                        </com.google.android.material.textfield.TextInputLayout>
+                                android:paddingEnd="12dp"
+                                android:background="@android:color/transparent" />
+                        </com.google.android.material.card.MaterialCardView>
                     </LinearLayout>
 
                     <Button

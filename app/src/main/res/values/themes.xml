@@ -2,22 +2,39 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Base.Theme.SuperTaxi" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
-        
-        <!-- AÑADIR ESTAS LÍNEAS PARA MODO DÍA -->
-        <!-- Color de la barra de estado (superior) -->
+        <!-- Colores para modo día -->
+        <item name="android:windowBackground">@color/colorBackground</item>
         <item name="android:statusBarColor">@color/colorPrimary</item>
-        
-        <!-- Color de la barra de navegación (inferior con botones del sistema) -->
         <item name="android:navigationBarColor">@color/white</item>
-        
-        <!-- Color de los iconos de la barra de navegación - OSCUROS para contraste con fondo blanco -->
         <item name="android:windowLightNavigationBar" tools:targetApi="o">true</item>
-        
-        <!-- Color de los iconos de la barra de estado - CLAROS para contraste con fondo azul -->
         <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+        
+        <!-- Colores de texto -->
+        <item name="android:textColorPrimary">@color/colorTextPrimary</item>
+        <item name="android:textColorSecondary">@color/colorTextSecondary</item>
+        
+        <!-- Estilos de spinners -->
+        <item name="android:spinnerStyle">@style/SpinnerStyle</item>
+        <item name="android:spinnerDropDownItemStyle">@style/SpinnerDropDownItemStyle</item>
     </style>
 
     <style name="Theme.SuperTaxi" parent="Base.Theme.SuperTaxi" />
+    
+    <!-- Estilo personalizado para spinners -->
+    <style name="SpinnerStyle" parent="Widget.AppCompat.Spinner">
+        <item name="android:background">@drawable/spinner_background</item>
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:paddingEnd">12dp</item>
+        <item name="android:paddingTop">12dp</item>
+        <item name="android:paddingBottom">12dp</item>
+    </style>
+    
+    <style name="SpinnerDropDownItemStyle" parent="Widget.AppCompat.DropDownItem.Spinner">
+        <item name="android:textColor">@color/colorTextPrimary</item>
+        <item name="android:background">@color/colorCardBackground</item>
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:paddingEnd">12dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+    </style>
 </resources>
