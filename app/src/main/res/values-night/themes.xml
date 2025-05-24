@@ -1,7 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Base.Theme.SuperTaxi" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your dark theme here. -->
         <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+        
+        <!-- AÑADIR ESTAS LÍNEAS PARA MODO NOCHE -->
+        <!-- Color de la barra de estado (superior) -->
+        <item name="android:statusBarColor">@color/colorPrimaryDark</item>
+        
+        <!-- Color de la barra de navegación (inferior con botones del sistema) -->
+        <item name="android:navigationBarColor">@color/black</item>
+        
+        <!-- Color de los iconos de la barra de navegación - CLAROS para contraste con fondo negro -->
+        <item name="android:windowLightNavigationBar" tools:targetApi="o">false</item>
+        
+        <!-- Color de los iconos de la barra de estado - CLAROS para contraste con fondo oscuro -->
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
     </style>
 </resources>
