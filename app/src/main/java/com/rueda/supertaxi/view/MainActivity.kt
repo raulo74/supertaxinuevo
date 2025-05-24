@@ -451,6 +451,10 @@ class MainActivity : AppCompatActivity() {
         viewModel.resumenEnabled.observe(this) { enabled ->
             binding.btnResumenServicio.isEnabled = enabled
             updateButtonStyle(binding.btnResumenServicio, enabled, R.color.colorPurple)
+            
+            // También habilitar el botón de siguiente servicio
+            binding.btnSiguienteServicio.isEnabled = enabled
+            updateButtonStyle(binding.btnSiguienteServicio, enabled, R.color.colorAccent)
         }
         
         // Observar datos de distancia y tiempo para mostrar en la UI
@@ -611,6 +615,24 @@ class MainActivity : AppCompatActivity() {
             
             detalleActivityLauncher.launch(intent, options)
         }
+
+        // Botón siguiente servicio
+        binding.btnSiguienteServicio.setOnClickListener {
+            Log.d("MainActivity", "Botón Siguiente Servicio pulsado")
+            
+            // Verificar que tenemos datos para guardar
+            val servicioId = viewModel.currentServicioId.value
+            if (servicioId == null || servicioId == 0L) {
+                Log.e("MainActivity", "No hay servicio actual")
+                Toast.makeText(this, "Error: No hay datos de servicio", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            
+            // Reiniciar directamente para el siguiente servicio
+            resetUI()
+            Toast.makeText(this, "Listo para el siguiente servicio", Toast.LENGTH_SHORT).show()
+            Log.d("MainActivity", "UI reiniciada para nuevo servicio")
+        }
     }
     
     private fun showAddTipoServicioDialog() {
@@ -670,11 +692,6 @@ class MainActivity : AppCompatActivity() {
         binding.editComision.error = null
         binding.spinnerTipoPago.setSelection(0)
         
-        // Restaurar el color normal del spinner
-        binding.spinnerTipoServicio.setBackgroundColor(
-            ContextCompat.getColor(this, android.R.color.transparent)
-        )
-        
         // Establecer "Parada de taxis" en el spinner
         val adapter = binding.spinnerTipoServicio.adapter
         if (adapter != null) {
@@ -693,15 +710,18 @@ class MainActivity : AppCompatActivity() {
         binding.panelRutaServicio.isVisible = false
         binding.separadorRutas.isVisible = false
         
+        // Resetear ambos botones finales
+        binding.btnResumenServicio.isEnabled = false
+        binding.btnSiguienteServicio.isEnabled = false
+        updateButtonStyle(binding.btnResumenServicio, false, R.color.colorPurple)
+        updateButtonStyle(binding.btnSiguienteServicio, false, R.color.colorAccent)
+        
         // Resetear textos informativos
         binding.tvDistanciaHastaCliente.text = "0.0 km"
         binding.tvDistanciaServicio.text = "0.0 km"
         binding.tvTiempoHastaCliente.text = "0 min"
         binding.tvTiempoServicio.text = "0 min"
         binding.routeStatusText.text = ""
-        
-        // Restaurar título normal
-        supportActionBar?.title = "SuperTaxi"
         
         Log.d("MainActivity", "UI reiniciada con Parada de taxis como predeterminado")
     }

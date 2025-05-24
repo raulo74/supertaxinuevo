@@ -69,4 +69,5 @@
     <string name="salir_app">Salir de la app</string>
     <string name="servicio_cancelado">Servicio cancelado. Puedes iniciar un nuevo servicio.</string>
     <string name="tipo_servicio_cambiado">Tipo de servicio cambiado. Usa el botón atrás para aplicar el cambio.</string>
+    <string name="ver_resumen">Ver Resumen</string>
 </resources>

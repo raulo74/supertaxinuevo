@@ -193,16 +193,42 @@
                         android:text="@string/fin_de_servicio"
                         app:cornerRadius="8dp" />
 
-                    <Button
-                        android:id="@+id/btnResumenServicio"
+                    <LinearLayout
+                        android:id="@+id/layoutBotonesFinales"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:drawableStart="@drawable/ic_file_text"
-                        android:drawablePadding="8dp"
-                        android:enabled="false"
-                        android:padding="12dp"
-                        android:text="@string/resumen_de_servicio"
-                        app:cornerRadius="8dp" />
+                        android:orientation="horizontal"
+                        android:weightSum="2"
+                        android:baselineAligned="false">
+
+                        <Button
+                            android:id="@+id/btnResumenServicio"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="6dp"
+                            android:drawableStart="@drawable/ic_file_text"
+                            android:drawablePadding="6dp"
+                            android:enabled="false"
+                            android:padding="12dp"
+                            android:text="@string/ver_resumen"
+                            android:textSize="14sp"
+                            app:cornerRadius="8dp" />
+
+                        <Button
+                            android:id="@+id/btnSiguienteServicio"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="6dp"
+                            android:drawableStart="@drawable/ic_navigation"
+                            android:drawablePadding="6dp"
+                            android:enabled="false"
+                            android:padding="12dp"
+                            android:text="@string/siguiente_servicio"
+                            android:textSize="14sp"
+                            app:cornerRadius="8dp" />
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
