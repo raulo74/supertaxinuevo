@@ -1,14 +1,21 @@
 package com.rueda.supertaxi.view
 
+import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.provider.Settings
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.rueda.supertaxi.R
@@ -32,6 +39,29 @@ class SettingsActivity : AppCompatActivity() {
         const val DARK_MODE_NIGHT = 2
     }
     
+    // Launcher para solicitar permisos múltiples
+    private val permissionsLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        updatePermissionStatus()
+        
+        val allGranted = permissions.entries.all { it.value }
+        if (allGranted) {
+            Toast.makeText(this, "Todos los permisos han sido concedidos", Toast.LENGTH_SHORT).show()
+        } else {
+            val deniedPermissions = permissions.entries.filter { !it.value }.map { it.key }
+            showPermissionsDeniedDialog(deniedPermissions)
+        }
+    }
+    
+    // Launcher para abrir configuración de la aplicación
+    private val appSettingsLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        // Actualizar el estado de los permisos cuando el usuario regrese de configuración
+        updatePermissionStatus()
+    }
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivitySettingsBinding.inflate(layoutInflater)
@@ -42,7 +72,11 @@ class SettingsActivity : AppCompatActivity() {
         
         setupToolbar()
         setupDarkModeSettings()
+        setupPermissionsSection()
         setupResetButtons()
+        
+        // Actualizar el estado inicial de los permisos
+        updatePermissionStatus()
     }
     
     private fun setupToolbar() {
@@ -52,6 +86,185 @@ class SettingsActivity : AppCompatActivity() {
         
         binding.toolbar.setNavigationOnClickListener {
             onBackPressed()
+        }
+    }
+    
+    private fun setupPermissionsSection() {
+        // Botón para verificar permisos
+        binding.btnCheckPermissions.setOnClickListener {
+            checkAndShowPermissionStatus()
+        }
+        
+        // Botón para solicitar permisos
+        binding.btnRequestPermissions.setOnClickListener {
+            requestAllPermissions()
+        }
+        
+        // Botón para abrir configuración de la app
+        binding.btnOpenAppSettings.setOnClickListener {
+            openAppSettings()
+        }
+    }
+    
+    private fun updatePermissionStatus() {
+        val permissions = getAllRequiredPermissions()
+        var grantedCount = 0
+        var totalCount = permissions.size
+        
+        val permissionDetails = StringBuilder()
+        
+        permissions.forEach { permission ->
+            val isGranted = ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
+            if (isGranted) grantedCount++
+            
+            val permissionName = getPermissionDisplayName(permission)
+            val status = if (isGranted) "✅ Concedido" else "❌ Denegado"
+            permissionDetails.append("$permissionName: $status\n")
+        }
+        
+        // Actualizar el texto de estado
+        val statusText = "Permisos concedidos: $grantedCount de $totalCount"
+        binding.tvPermissionStatus.text = statusText
+        
+        // Actualizar el detalle de permisos
+        binding.tvPermissionDetails.text = permissionDetails.toString().trim()
+        
+        // Habilitar/deshabilitar botones según el estado
+        val allGranted = grantedCount == totalCount
+        binding.btnRequestPermissions.isEnabled = !allGranted
+        binding.btnRequestPermissions.text = if (allGranted) {
+            "Todos los permisos concedidos"
+        } else {
+            "Solicitar permisos faltantes"
+        }
+        
+        // Cambiar color del indicador de estado
+        val colorResId = if (allGranted) R.color.colorAccent else R.color.colorRed
+        binding.tvPermissionStatus.setTextColor(ContextCompat.getColor(this, colorResId))
+    }
+    
+    private fun getAllRequiredPermissions(): List<String> {
+        val permissions = mutableListOf(
+            // Permisos de ubicación (ESENCIALES)
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+        
+        // Permisos de almacenamiento según la versión de Android
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2) { // Android 12L o menor
+            permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE)
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) { // Android 10 o menor
+                permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            }
+        }
+        // NOTA: Para Android 13+ no necesitamos permisos de media porque usamos getExternalFilesDir()
+        
+        // Permisos para notificaciones (Android 13+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+        
+        // Permisos para ubicación en segundo plano (Android 10+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            permissions.add(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+        }
+        
+        return permissions
+    }
+    
+    private fun getPermissionDisplayName(permission: String): String {
+        return when (permission) {
+            Manifest.permission.ACCESS_FINE_LOCATION -> "Ubicación precisa"
+            Manifest.permission.ACCESS_COARSE_LOCATION -> "Ubicación aproximada"
+            Manifest.permission.ACCESS_BACKGROUND_LOCATION -> "Ubicación en segundo plano"
+            Manifest.permission.READ_EXTERNAL_STORAGE -> "Leer almacenamiento (para CSV)"
+            Manifest.permission.WRITE_EXTERNAL_STORAGE -> "Escribir almacenamiento (para CSV)"
+            Manifest.permission.POST_NOTIFICATIONS -> "Mostrar notificaciones"
+            else -> permission.substringAfterLast(".")
+        }
+    }
+    
+    private fun checkAndShowPermissionStatus() {
+        updatePermissionStatus()
+        
+        val permissions = getAllRequiredPermissions()
+        val deniedPermissions = permissions.filter { 
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED 
+        }
+        
+        if (deniedPermissions.isEmpty()) {
+            MaterialAlertDialogBuilder(this)
+                .setTitle("Estado de permisos")
+                .setMessage("✅ Todos los permisos necesarios están concedidos.\n\nLa aplicación funcionará correctamente.")
+                .setPositiveButton("Entendido", null)
+                .show()
+        } else {
+            val deniedList = deniedPermissions.joinToString("\n") { "• ${getPermissionDisplayName(it)}" }
+            MaterialAlertDialogBuilder(this)
+                .setTitle("Permisos faltantes")
+                .setMessage("❌ Los siguientes permisos están denegados:\n\n$deniedList\n\n" +
+                           "La aplicación puede no funcionar correctamente sin estos permisos.")
+                .setPositiveButton("Solicitar permisos") { _, _ ->
+                    requestAllPermissions()
+                }
+                .setNegativeButton("Cancelar", null)
+                .show()
+        }
+    }
+    
+    private fun requestAllPermissions() {
+        val permissions = getAllRequiredPermissions()
+        val permissionsToRequest = permissions.filter { 
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED 
+        }
+        
+        if (permissionsToRequest.isEmpty()) {
+            Toast.makeText(this, "Todos los permisos ya están concedidos", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        // Mostrar explicación antes de solicitar permisos
+        val permissionNames = permissionsToRequest.joinToString("\n") { "• ${getPermissionDisplayName(it)}" }
+        
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Permisos necesarios")
+            .setMessage("SuperTaxi necesita los siguientes permisos para funcionar correctamente:\n\n" +
+                       "$permissionNames\n\n" +
+                       "• Ubicación: Para rastrear las rutas de los servicios de taxi\n" +
+                       "• Almacenamiento: Para guardar el archivo CSV con los datos de los servicios\n" +
+                       "• Notificaciones: Para mostrar el estado del servicio mientras está activo\n" +
+                       "• Ubicación en segundo plano: Para continuar el rastreo cuando cambias de app\n\n" +
+                       "¿Deseas conceder estos permisos?")
+            .setPositiveButton("Conceder permisos") { _, _ ->
+                permissionsLauncher.launch(permissionsToRequest.toTypedArray())
+            }
+            .setNegativeButton("Ahora no", null)
+            .show()
+    }
+    
+    private fun showPermissionsDeniedDialog(deniedPermissions: List<String>) {
+        val deniedList = deniedPermissions.joinToString("\n") { "• ${getPermissionDisplayName(it)}" }
+        
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Permisos denegados")
+            .setMessage("Los siguientes permisos fueron denegados:\n\n$deniedList\n\n" +
+                       "Para que la aplicación funcione correctamente, necesitas conceder estos permisos " +
+                       "desde la configuración de la aplicación.")
+            .setPositiveButton("Ir a configuración") { _, _ ->
+                openAppSettings()
+            }
+            .setNegativeButton("Más tarde", null)
+            .show()
+    }
+    
+    private fun openAppSettings() {
+        try {
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.fromParts("package", packageName, null)
+            }
+            appSettingsLauncher.launch(intent)
+        } catch (e: Exception) {
+            Toast.makeText(this, "No se pudo abrir la configuración de la aplicación", Toast.LENGTH_SHORT).show()
         }
     }
     

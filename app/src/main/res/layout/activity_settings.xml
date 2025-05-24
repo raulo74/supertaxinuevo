@@ -38,6 +38,106 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+            <!-- Sección Permisos -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Permisos de la aplicación"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="?android:attr/textColorPrimary"
+                        android:layout_marginBottom="8dp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Gestiona los permisos necesarios para el funcionamiento correcto de SuperTaxi"
+                        android:textSize="14sp"
+                        android:textColor="?android:attr/textColorSecondary"
+                        android:layout_marginBottom="16dp" />
+
+                    <!-- Estado de permisos -->
+                    <TextView
+                        android:id="@+id/tvPermissionStatus"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Verificando permisos..."
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp"
+                        tools:text="Permisos concedidos: 5 de 7" />
+
+                    <!-- Detalle de permisos -->
+                    <TextView
+                        android:id="@+id/tvPermissionDetails"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text=""
+                        android:textSize="12sp"
+                        android:textColor="?android:attr/textColorSecondary"
+                        android:layout_marginBottom="16dp"
+                        android:fontFamily="monospace"
+                        tools:text="Ubicación precisa: ✅ Concedido\nUbicación aproximada: ✅ Concedido\nAlmacenamiento: ❌ Denegado" />
+
+                    <!-- Botones de gestión de permisos -->
+                    <Button
+                        android:id="@+id/btnCheckPermissions"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Verificar estado de permisos"
+                        android:drawableStart="@drawable/ic_check"
+                        android:drawablePadding="8dp"
+                        android:layout_marginBottom="8dp"
+                        app:cornerRadius="8dp"
+                        app:backgroundTint="@color/colorPrimary" />
+
+                    <Button
+                        android:id="@+id/btnRequestPermissions"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Solicitar permisos faltantes"
+                        android:drawableStart="@drawable/ic_settings"
+                        android:drawablePadding="8dp"
+                        android:layout_marginBottom="8dp"
+                        app:cornerRadius="8dp"
+                        app:backgroundTint="@color/colorAccent" />
+
+                    <Button
+                        android:id="@+id/btnOpenAppSettings"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Abrir configuración de la app"
+                        android:drawableStart="@drawable/ic_settings"
+                        android:drawablePadding="8dp"
+                        app:cornerRadius="8dp"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        app:strokeColor="@color/colorPrimary"
+                        android:textColor="@color/colorPrimary" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="ℹ️ Los permisos son necesarios para el correcto funcionamiento de la aplicación"
+                        android:textSize="12sp"
+                        android:textColor="@color/colorTextSecondary"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
             <!-- Sección Modo Oscuro -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
