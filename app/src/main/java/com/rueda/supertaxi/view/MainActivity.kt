@@ -139,6 +139,9 @@ class MainActivity : AppCompatActivity() {
             setupObservers()
             setupListeners()
             
+            // Establecer "Parada de taxis" como predeterminado al iniciar la app
+            viewModel.setTipoServicio("Parada de taxis")
+            
             LocalBroadcastManager.getInstance(this).registerReceiver(
                 locationReceiver,
                 IntentFilter("LOCATION_UPDATE")
@@ -235,6 +238,16 @@ class MainActivity : AppCompatActivity() {
             
             tipoServicioAdapter.clear()
             tipoServicioAdapter.addAll(tiposServicioList)
+            
+            // Si no hay selección actual o es la primera vez, seleccionar "Parada de taxis"
+            if (binding.spinnerTipoServicio.selectedItemPosition < 0 || 
+                viewModel.tipoServicio.value.isNullOrEmpty()) {
+                val indexParadaTaxis = tiposServicioList.indexOf("Parada de taxis")
+                if (indexParadaTaxis >= 0) {
+                    binding.spinnerTipoServicio.setSelection(indexParadaTaxis)
+                    viewModel.setTipoServicio("Parada de taxis")
+                }
+            }
         }
         
         // Observar estados de los botones con estilo mejorado
@@ -484,11 +497,23 @@ class MainActivity : AppCompatActivity() {
         binding.editComision.error = null
         binding.spinnerTipoPago.setSelection(0)
         
+        // Establecer "Parada de taxis" en el spinner
+        val adapter = binding.spinnerTipoServicio.adapter
+        if (adapter != null) {
+            for (i in 0 until adapter.count) {
+                if (adapter.getItem(i).toString() == "Parada de taxis") {
+                    binding.spinnerTipoServicio.setSelection(i)
+                    break
+                }
+            }
+        }
+        
         // Ocultar paneles que deberían estar ocultos al inicio
         binding.cardMapaPreview.isVisible = false
         binding.layoutDatosPago.isVisible = false
         binding.panelRutaCliente.isVisible = false
         binding.panelRutaServicio.isVisible = false
+        binding.separadorRutas.isVisible = false
         
         // Resetear textos informativos
         binding.tvDistanciaHastaCliente.text = "0.0 km"
@@ -497,7 +522,7 @@ class MainActivity : AppCompatActivity() {
         binding.tvTiempoServicio.text = "0 min"
         binding.routeStatusText.text = ""
         
-        Log.d("MainActivity", "UI reiniciada")
+        Log.d("MainActivity", "UI reiniciada con Parada de taxis como predeterminado")
     }
     
     override fun onDestroy() {

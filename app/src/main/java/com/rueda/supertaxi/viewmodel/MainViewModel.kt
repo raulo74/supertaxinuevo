@@ -351,8 +351,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         
         // Reiniciar variables del servicio
         _tipoServicio.value = ""
-        _dia.value = LocalDate.now()  // Usar fecha actual como valor predeterminado
-        _hora1.value = LocalTime.now()  // Usar hora actual como valor predeterminado
+        _dia.value = LocalDate.now()
+        _hora1.value = LocalTime.now()
         _hora2.value = LocalTime.now()
         _hora3.value = LocalTime.now()
         _importe.value = 0.0
@@ -371,7 +371,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _kmTotales.value = 0.0
         _precioKm.value = 0.0
         
-        // Reiniciar estados de botones - asegurarnos que todos están deshabilitados al iniciar
+        // Reiniciar estados de botones
         _empezarEnabled.value = false
         _inicioServicioEnabled.value = false
         _finServicioEnabled.value = false
@@ -381,7 +381,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _currentServicioId.value = 0
         servicioActual = null
         
-        Log.d("MainViewModel", "resetVariables() completado")
+        // Establecer "Parada de taxis" como tipo de servicio predeterminado
+        _tipoServicio.value = "Parada de taxis"
+        setTipoServicio("Parada de taxis")
+        
+        Log.d("MainViewModel", "resetVariables() completado - Tipo servicio: Parada de taxis")
     }
 
     fun getServicioActual(): Servicio? {
