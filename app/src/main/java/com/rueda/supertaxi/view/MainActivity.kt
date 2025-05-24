@@ -244,7 +244,20 @@ class MainActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_ingresos -> {
-                    Toast.makeText(this, "Ingresos - Funcionalidad pendiente", Toast.LENGTH_SHORT).show()
+                    if (viewModel.puedeVolverAtras()) {
+                        MaterialAlertDialogBuilder(this)
+                            .setTitle(getString(R.string.servicio_en_progreso))
+                            .setMessage(getString(R.string.cancelar_servicio_mensaje))
+                            .setPositiveButton(getString(R.string.si_cancelar_servicio)) { _, _ ->
+                                val intent = Intent(this, IngresosActivity::class.java)
+                                startActivity(intent)
+                            }
+                            .setNegativeButton(getString(R.string.no_continuar_servicio), null)
+                            .show()
+                    } else {
+                        val intent = Intent(this, IngresosActivity::class.java)
+                        startActivity(intent)
+                    }
                     true
                 }
                 R.id.nav_ajustes -> {

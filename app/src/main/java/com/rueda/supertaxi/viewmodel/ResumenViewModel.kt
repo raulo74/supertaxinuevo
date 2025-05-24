@@ -22,7 +22,7 @@ enum class FiltroTiempo {
 
 class ResumenViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: ServicioRepository
-    private val allServicios: LiveData<List<Servicio>>
+    val allServicios: LiveData<List<Servicio>>
     
     private val _filtroActual = MutableLiveData<FiltroTiempo>(FiltroTiempo.HOY)
     val filtroActual: LiveData<FiltroTiempo> = _filtroActual
