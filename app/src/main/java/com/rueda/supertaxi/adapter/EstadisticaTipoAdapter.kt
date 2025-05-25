@@ -31,13 +31,32 @@ class EstadisticaTipoAdapter : ListAdapter<EstadisticaTipoServicio, EstadisticaT
         fun bind(estadistica: EstadisticaTipoServicio) {
             val decimalFormat = DecimalFormat("#,##0.00")
             val decimalFormatKm = DecimalFormat("#,##0.0")
+            val decimalFormatPorcentaje = DecimalFormat("#,##0.0")
             
+            // Datos básicos
             binding.tvTipoServicio.text = estadistica.tipoServicio
             binding.tvCantidadServicios.text = estadistica.cantidadServicios.toString()
             binding.tvTotalIngresos.text = "${decimalFormat.format(estadistica.totalIngresos)}€"
             binding.tvTotalKilometros.text = "${decimalFormatKm.format(estadistica.totalKilometros)} km"
             binding.tvIngresoPromedio.text = "${decimalFormat.format(estadistica.ingresoPromedio)}€"
             binding.tvKmPromedio.text = "${decimalFormatKm.format(estadistica.kmPromedio)} km"
+            
+            // Configurar el porcentaje
+            val porcentajeTexto = "${decimalFormatPorcentaje.format(estadistica.porcentajeIngresos)}%"
+            binding.chipPorcentaje.text = porcentajeTexto
+            binding.tvPorcentajeVisual.text = porcentajeTexto
+            
+            // Configurar la barra de progreso
+            binding.progressPorcentaje.progress = estadistica.porcentajeIngresos.toInt()
+            
+            // Cambiar color del chip según el porcentaje
+            val context = binding.root.context
+            val colorChip = when {
+                estadistica.porcentajeIngresos >= 50 -> context.getColor(android.R.color.holo_green_dark)
+                estadistica.porcentajeIngresos >= 25 -> context.getColor(android.R.color.holo_orange_dark)
+                else -> context.getColor(android.R.color.holo_red_dark)
+            }
+            binding.chipPorcentaje.chipBackgroundColor = android.content.res.ColorStateList.valueOf(colorChip)
         }
     }
 }

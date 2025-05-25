@@ -7,7 +7,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.rueda.supertaxi.adapter.IngresosPorTipoAdapter
+import com.rueda.supertaxi.adapter.EstadisticaTipoAdapter
 import com.rueda.supertaxi.databinding.ActivityIngresosBinding
 import com.rueda.supertaxi.viewmodel.FiltroTiempo
 import com.rueda.supertaxi.viewmodel.ResumenViewModel
@@ -16,7 +16,7 @@ import java.text.DecimalFormat
 class IngresosActivity : AppCompatActivity() {
     private lateinit var binding: ActivityIngresosBinding
     private val viewModel: ResumenViewModel by viewModels()
-    private lateinit var ingresosPorTipoAdapter: IngresosPorTipoAdapter
+    private lateinit var estadisticasDetalladasAdapter: EstadisticaTipoAdapter
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,15 +46,12 @@ class IngresosActivity : AppCompatActivity() {
     }
     
     private fun setupRecyclerView() {
-        ingresosPorTipoAdapter = IngresosPorTipoAdapter()
-        binding.recyclerIngresosPorTipo.apply {
+        estadisticasDetalladasAdapter = EstadisticaTipoAdapter()
+        binding.recyclerEstadisticasDetalladas.apply {
             layoutManager = LinearLayoutManager(this@IngresosActivity)
-            adapter = ingresosPorTipoAdapter
+            adapter = estadisticasDetalladasAdapter
             setHasFixedSize(true)
-            Log.d("IngresosActivity", "RecyclerView configurado")
-            
-            // Forzar la actualización del layout
-            requestLayout()
+            Log.d("IngresosActivity", "RecyclerView de estadísticas detalladas configurado")
         }
     }
     
@@ -107,12 +104,12 @@ class IngresosActivity : AppCompatActivity() {
             if (cantidad == 0) {
                 binding.tvNoData.visibility = View.VISIBLE
                 binding.cardEstadisticas.visibility = View.GONE
-                binding.cardIngresosPorTipo.visibility = View.GONE
+                binding.cardEstadisticasDetalladas.visibility = View.GONE
                 Log.d("IngresosActivity", "No hay servicios - mostrando mensaje")
             } else {
                 binding.tvNoData.visibility = View.GONE
                 binding.cardEstadisticas.visibility = View.VISIBLE
-                binding.cardIngresosPorTipo.visibility = View.VISIBLE
+                binding.cardEstadisticasDetalladas.visibility = View.VISIBLE
                 Log.d("IngresosActivity", "Hay servicios - mostrando estadísticas")
             }
         }
@@ -127,75 +124,53 @@ class IngresosActivity : AppCompatActivity() {
             binding.tvTotalKm.text = "${decimalFormatKm.format(kilometros)}km"
         }
         
-        // Observar ingresos por tipo
-        viewModel.ingresosPorTipoServicio.observe(this) { ingresosPorTipo ->
-            Log.d("IngresosActivity", "Ingresos por tipo recibidos: ${ingresosPorTipo.size} tipos")
-            Log.d("IngresosActivity", "Contenido del mapa: $ingresosPorTipo")
-            
-            if (ingresosPorTipo.isNotEmpty()) {
-                // Convertir el mapa a lista de pares para el adapter
-                val listaIngresos = ingresosPorTipo.entries.map { entry ->
-                    Pair(entry.key, entry.value)
-                }.sortedByDescending { it.second } // Ordenar por ingresos de mayor a menor
-                
-                Log.d("IngresosActivity", "Lista de ingresos a enviar al adapter: $listaIngresos")
-                ingresosPorTipoAdapter.submitList(listaIngresos) {
-                    Log.d("IngresosActivity", "Lista actualizada en el adapter")
-                    binding.recyclerIngresosPorTipo.requestLayout()
-                }
-                
-                // Log para debug
-                listaIngresos.forEach { (tipo, total) ->
-                    Log.d("IngresosActivity", "Tipo: $tipo, Total: $total")
-                }
-            } else {
-                Log.d("IngresosActivity", "No hay ingresos por tipo para mostrar")
-                ingresosPorTipoAdapter.submitList(emptyList()) {
-                    Log.d("IngresosActivity", "Lista vacía actualizada en el adapter")
-                    binding.recyclerIngresosPorTipo.requestLayout()
-                }
-            }
-        }
-        
-        // Observar estadísticas por tipo
+        // Observar estadísticas detalladas por tipo (ÚNICA SECCIÓN)
         viewModel.estadisticasPorTipo.observe(this) { estadisticas ->
-            Log.d("IngresosActivity", "Estadísticas por tipo recibidas: ${estadisticas.size} tipos")
+            Log.d("IngresosActivity", "Estadísticas detalladas recibidas: ${estadisticas.size} tipos")
             
             if (estadisticas.isNotEmpty()) {
-                // Log para debug
+                estadisticasDetalladasAdapter.submitList(estadisticas) {
+                    Log.d("IngresosActivity", "Lista de estadísticas detalladas actualizada")
+                    binding.recyclerEstadisticasDetalladas.requestLayout()
+                }
+                
+                // Log para debug de cada estadística
                 estadisticas.forEach { estadistica ->
                     Log.d("IngresosActivity", """
-                        Tipo: ${estadistica.tipoServicio}
-                        Cantidad: ${estadistica.cantidadServicios}
-                        Total Ingresos: ${estadistica.totalIngresos}
-                        Total Km: ${estadistica.totalKilometros}
-                        Promedio Ingresos: ${estadistica.ingresoPromedio}
-                        Promedio Km: ${estadistica.kmPromedio}
+                        Estadística detallada:
+                        - Tipo: ${estadistica.tipoServicio}
+                        - Servicios: ${estadistica.cantidadServicios}
+                        - Ingresos: ${estadistica.totalIngresos}€
+                        - Porcentaje: ${estadistica.porcentajeIngresos}%
+                        - Km totales: ${estadistica.totalKilometros} km
+                        - Promedio ingresos: ${estadistica.ingresoPromedio}€
+                        - Promedio km: ${estadistica.kmPromedio} km
                     """.trimIndent())
                 }
             } else {
-                Log.d("IngresosActivity", "No hay estadísticas por tipo para mostrar")
+                Log.d("IngresosActivity", "No hay estadísticas detalladas para mostrar")
+                estadisticasDetalladasAdapter.submitList(emptyList())
             }
         }
         
-        // Observar datos para calcular promedios
+        // Observar datos para calcular promedios generales
         viewModel.serviciosFiltrados.observe(this) { servicios ->
             Log.d("IngresosActivity", "Servicios filtrados: ${servicios.size}")
             
             if (servicios.isNotEmpty()) {
-                // Calcular ingreso promedio
+                // Calcular ingreso promedio general
                 val ingresoPromedio = servicios.map { it.importe }.average()
                 binding.tvIngresoPromedio.text = "${decimalFormat.format(ingresoPromedio)}€"
                 
-                // Calcular km promedio
+                // Calcular km promedio general
                 val kmPromedio = servicios.map { it.kmTotales }.average()
                 binding.tvKmPromedio.text = "${decimalFormatKm.format(kmPromedio)} km"
                 
-                // Calcular tiempo promedio
+                // Calcular tiempo promedio general
                 val tiempoPromedio = servicios.map { it.minutosTotales }.average()
                 binding.tvTiempoPromedio.text = "${tiempoPromedio.toInt()} min"
                 
-                Log.d("IngresosActivity", "Promedios calculados - Ingreso: $ingresoPromedio, Km: $kmPromedio, Tiempo: $tiempoPromedio")
+                Log.d("IngresosActivity", "Promedios generales calculados - Ingreso: $ingresoPromedio, Km: $kmPromedio, Tiempo: $tiempoPromedio")
             } else {
                 binding.tvIngresoPromedio.text = "0.00€"
                 binding.tvKmPromedio.text = "0.0 km"

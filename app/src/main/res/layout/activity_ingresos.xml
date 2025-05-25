@@ -205,9 +205,9 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- NUEVA TARJETA: INGRESOS POR TIPO DE SERVICIO -->
+                <!-- TARJETA DE ESTADÍSTICAS DETALLADAS POR TIPO (ÚNICA SECCIÓN) -->
                 <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/cardIngresosPorTipo"
+                    android:id="@+id/cardEstadisticasDetalladas"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp"
@@ -224,25 +224,25 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/ingresos_por_tipo_servicio"
+                            android:text="@string/estadisticas_por_tipo_servicio"
                             android:textSize="18sp"
                             android:textStyle="bold"
                             android:textColor="@color/colorTextPrimary"
                             android:layout_marginBottom="16dp" />
 
                         <androidx.recyclerview.widget.RecyclerView
-                            android:id="@+id/recyclerIngresosPorTipo"
+                            android:id="@+id/recyclerEstadisticasDetalladas"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:nestedScrollingEnabled="false"
                             android:clipToPadding="false"
                             android:paddingBottom="8dp"
-                            tools:listitem="@layout/item_ingreso_por_tipo"
+                            tools:listitem="@layout/item_estadistica_tipo"
                             tools:itemCount="2" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- ESTADÍSTICAS ADICIONALES -->
+                <!-- ESTADÍSTICAS ADICIONALES (PROMEDIOS) -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

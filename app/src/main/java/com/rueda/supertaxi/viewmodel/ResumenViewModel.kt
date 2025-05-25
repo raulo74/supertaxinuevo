@@ -27,7 +27,8 @@ data class EstadisticaTipoServicio(
     val totalIngresos: Double,
     val totalKilometros: Double,
     val ingresoPromedio: Double,
-    val kmPromedio: Double
+    val kmPromedio: Double,
+    val porcentajeIngresos: Double
 )
 
 class ResumenViewModel(application: Application) : AndroidViewModel(application) {
@@ -45,9 +46,6 @@ class ResumenViewModel(application: Application) : AndroidViewModel(application)
     
     // Estadísticas por tipo de servicio
     val estadisticasPorTipo: LiveData<List<EstadisticaTipoServicio>>
-    
-    // Ingresos por tipo de servicio
-    val ingresosPorTipoServicio: LiveData<Map<String, Double>>
     
     init {
         val database = AppDatabase.getDatabase(application)
@@ -77,6 +75,9 @@ class ResumenViewModel(application: Application) : AndroidViewModel(application)
             if (servicios.isEmpty()) {
                 emptyList()
             } else {
+                // Calcular el total de ingresos de todos los servicios para el porcentaje
+                val totalIngresosGeneral = servicios.sumOf { it.importe }
+                
                 servicios.groupBy { it.tipoServicio }
                     .map { (tipoServicio, serviciosDelTipo) ->
                         val cantidadServicios = serviciosDelTipo.size
@@ -85,33 +86,24 @@ class ResumenViewModel(application: Application) : AndroidViewModel(application)
                         val ingresoPromedio = if (cantidadServicios > 0) totalIngresos / cantidadServicios else 0.0
                         val kmPromedio = if (cantidadServicios > 0) totalKilometros / cantidadServicios else 0.0
                         
+                        // Calcular porcentaje sobre el total
+                        val porcentajeIngresos = if (totalIngresosGeneral > 0) {
+                            (totalIngresos / totalIngresosGeneral) * 100
+                        } else {
+                            0.0
+                        }
+                        
                         EstadisticaTipoServicio(
                             tipoServicio = tipoServicio,
                             cantidadServicios = cantidadServicios,
                             totalIngresos = totalIngresos,
                             totalKilometros = totalKilometros,
                             ingresoPromedio = ingresoPromedio,
-                            kmPromedio = kmPromedio
+                            kmPromedio = kmPromedio,
+                            porcentajeIngresos = porcentajeIngresos
                         )
                     }
                     .sortedByDescending { it.totalIngresos }
-            }
-        }
-        
-        // Calcular ingresos por tipo de servicio
-        ingresosPorTipoServicio = serviciosFiltrados.map { servicios ->
-            Log.d("ResumenViewModel", "Calculando ingresos por tipo para ${servicios.size} servicios")
-            
-            if (servicios.isEmpty()) {
-                Log.d("ResumenViewModel", "No hay servicios para calcular ingresos por tipo")
-                emptyMap()
-            } else {
-                val ingresosPorTipo = servicios.groupBy { it.tipoServicio }
-                    .mapValues { (_, serviciosDelTipo) ->
-                        serviciosDelTipo.sumOf { it.importe }
-                    }
-                Log.d("ResumenViewModel", "Ingresos por tipo calculados: $ingresosPorTipo")
-                ingresosPorTipo
             }
         }
     }
