@@ -81,6 +81,10 @@ class IngresosActivity : AppCompatActivity() {
         val decimalFormat = DecimalFormat("#,##0.00")
         val decimalFormatKm = DecimalFormat("#,##0.0")
         
+        // VERIFICAR QUE EL FORMATO FUNCIONE
+        Log.d("IngresosActivity", "Test DecimalFormat - 15.5 = ${decimalFormat.format(15.5)}")
+        Log.d("IngresosActivity", "Test DecimalFormatKm - 23.7 = ${decimalFormatKm.format(23.7)}")
+        
         // Observar cambios en el filtro seleccionado
         viewModel.filtroActual.observe(this) { filtro ->
             Log.d("IngresosActivity", "Filtro cambiado a: $filtro")
@@ -105,26 +109,44 @@ class IngresosActivity : AppCompatActivity() {
                 binding.tvNoData.visibility = View.VISIBLE
                 binding.cardEstadisticas.visibility = View.GONE
                 binding.cardEstadisticasDetalladas.visibility = View.GONE
-                Log.d("IngresosActivity", "No hay servicios - mostrando mensaje")
+                Log.d("IngresosActivity", "OCULTANDO tarjetas - cantidad = 0")
             } else {
                 binding.tvNoData.visibility = View.GONE
                 binding.cardEstadisticas.visibility = View.VISIBLE
                 binding.cardEstadisticasDetalladas.visibility = View.VISIBLE
-                Log.d("IngresosActivity", "Hay servicios - mostrando estadísticas")
+                Log.d("IngresosActivity", "MOSTRANDO tarjetas - cantidad = $cantidad")
+                
+                // VERIFICAR que las tarjetas estén realmente visibles
+                Log.d("IngresosActivity", "Visibilidad cardEstadisticas: ${binding.cardEstadisticas.visibility}")
+                Log.d("IngresosActivity", "Visibilidad cardEstadisticasDetalladas: ${binding.cardEstadisticasDetalladas.visibility}")
             }
         }
         
         viewModel.totalIngresos.observe(this) { ingresos ->
-            Log.d("IngresosActivity", "Total ingresos: $ingresos")
-            binding.tvTotalIngresos.text = "${decimalFormat.format(ingresos)}€"
+            Log.d("IngresosActivity", "Total ingresos recibido: $ingresos")
+            val textoFormateado = "${decimalFormat.format(ingresos)}€"
+            binding.tvTotalIngresos.text = textoFormateado
+            Log.d("IngresosActivity", "tvTotalIngresos actualizado a: $textoFormateado")
+            
+            runOnUiThread {
+                binding.tvTotalIngresos.requestLayout()
+                Log.d("IngresosActivity", "Forzando actualización de tvTotalIngresos en hilo principal")
+            }
         }
         
         viewModel.totalKilometros.observe(this) { kilometros ->
-            Log.d("IngresosActivity", "Total kilómetros: $kilometros")
-            binding.tvTotalKm.text = "${decimalFormatKm.format(kilometros)}km"
+            Log.d("IngresosActivity", "Total kilómetros recibido: $kilometros")
+            val textoFormateado = "${decimalFormatKm.format(kilometros)}km"
+            binding.tvTotalKm.text = textoFormateado
+            Log.d("IngresosActivity", "tvTotalKm actualizado a: $textoFormateado")
+            
+            runOnUiThread {
+                binding.tvTotalKm.requestLayout()
+                Log.d("IngresosActivity", "Forzando actualización de tvTotalKm en hilo principal")
+            }
         }
         
-        // Observar estadísticas detalladas por tipo (ÚNICA SECCIÓN)
+        // Observar estadísticas detalladas por tipo
         viewModel.estadisticasPorTipo.observe(this) { estadisticas ->
             Log.d("IngresosActivity", "Estadísticas detalladas recibidas: ${estadisticas.size} tipos")
             
@@ -153,36 +175,83 @@ class IngresosActivity : AppCompatActivity() {
             }
         }
         
-        // Observar datos para calcular promedios generales
+        // DEBUG: Observar TODOS los servicios en la base de datos
+        viewModel.allServicios.observe(this) { servicios ->
+            Log.d("IngresosActivity", "=== DEBUG TODOS LOS SERVICIOS EN BD ===")
+            Log.d("IngresosActivity", "Total servicios en BD: ${servicios.size}")
+            
+            servicios.forEach { servicio ->
+                Log.d("IngresosActivity", "BD - ID: ${servicio.id}, Fecha: ${servicio.dia}, Importe: ${servicio.importe}€, Tipo: ${servicio.tipoServicio}")
+            }
+            Log.d("IngresosActivity", "=== FIN DEBUG BD ===")
+        }
+        
+        // DEBUG: Observar datos para calcular promedios generales
         viewModel.serviciosFiltrados.observe(this) { servicios ->
-            Log.d("IngresosActivity", "Servicios filtrados: ${servicios.size}")
+            Log.d("IngresosActivity", "=== DEBUG SERVICIOS FILTRADOS ===")
+            Log.d("IngresosActivity", "Cantidad servicios filtrados: ${servicios.size}")
+            Log.d("IngresosActivity", "Filtro actual: ${viewModel.filtroActual.value}")
+            
+            // Log detallado de cada servicio filtrado
+            servicios.forEachIndexed { index, servicio ->
+                Log.d("IngresosActivity", """
+                    --- Servicio filtrado $index ---
+                    ID: ${servicio.id}
+                    Día: ${servicio.dia}
+                    Tipo: ${servicio.tipoServicio}
+                    Importe: ${servicio.importe}€
+                    Minutos totales: ${servicio.minutosTotales}
+                    Precio por hora: ${servicio.precioHora}€
+                    Km totales: ${servicio.kmTotales}
+                    Comisión: ${servicio.comision}€
+                """.trimIndent())
+            }
             
             if (servicios.isNotEmpty()) {
                 // Calcular ingreso promedio general
                 val ingresoPromedio = servicios.map { it.importe }.average()
+                Log.d("IngresosActivity", "ANTES de actualizar UI - Ingreso promedio: $ingresoPromedio")
+                
                 binding.tvIngresoPromedio.text = "${decimalFormat.format(ingresoPromedio)}€"
+                Log.d("IngresosActivity", "DESPUÉS de actualizar tvIngresoPromedio: ${binding.tvIngresoPromedio.text}")
                 
                 // Calcular km promedio general
                 val kmPromedio = servicios.map { it.kmTotales }.average()
+                Log.d("IngresosActivity", "ANTES de actualizar UI - Km promedio: $kmPromedio")
+                
                 binding.tvKmPromedio.text = "${decimalFormatKm.format(kmPromedio)} km"
+                Log.d("IngresosActivity", "DESPUÉS de actualizar tvKmPromedio: ${binding.tvKmPromedio.text}")
                 
                 // Calcular tiempo promedio general
                 val tiempoPromedio = servicios.map { it.minutosTotales }.average()
-                binding.tvTiempoPromedio.text = "${tiempoPromedio.toInt()} min"
+                Log.d("IngresosActivity", "ANTES de actualizar UI - Tiempo promedio: $tiempoPromedio")
                 
-                Log.d("IngresosActivity", "Promedios generales calculados - Ingreso: $ingresoPromedio, Km: $kmPromedio, Tiempo: $tiempoPromedio")
+                binding.tvTiempoPromedio.text = "${tiempoPromedio.toInt()} min"
+                Log.d("IngresosActivity", "DESPUÉS de actualizar tvTiempoPromedio: ${binding.tvTiempoPromedio.text}")
+                
+                // FORZAR ACTUALIZACIÓN DE LA UI
+                runOnUiThread {
+                    binding.tvIngresoPromedio.invalidate()
+                    binding.tvKmPromedio.invalidate()
+                    binding.tvTiempoPromedio.invalidate()
+                    Log.d("IngresosActivity", "UI forzada a actualizarse en hilo principal")
+                }
+                
             } else {
+                Log.d("IngresosActivity", "Lista vacía - poniendo valores en cero")
                 binding.tvIngresoPromedio.text = "0.00€"
                 binding.tvKmPromedio.text = "0.0 km"
                 binding.tvTiempoPromedio.text = "0 min"
                 
-                Log.d("IngresosActivity", "No hay servicios - promedios en cero")
+                runOnUiThread {
+                    binding.tvIngresoPromedio.invalidate()
+                    binding.tvKmPromedio.invalidate()
+                    binding.tvTiempoPromedio.invalidate()
+                    Log.d("IngresosActivity", "UI forzada a actualizarse (valores en cero) en hilo principal")
+                }
             }
-        }
-        
-        // Observar todos los servicios para debug
-        viewModel.allServicios.observe(this) { servicios ->
-            Log.d("IngresosActivity", "Total servicios en BD: ${servicios.size}")
+            
+            Log.d("IngresosActivity", "=== FIN DEBUG SERVICIOS FILTRADOS ===")
         }
     }
     

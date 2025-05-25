@@ -87,7 +87,7 @@
                 android:orientation="vertical"
                 android:padding="8dp">
 
-                <!-- TARJETA DE ESTADÍSTICAS GENERALES -->
+                <!-- TARJETA DE ESTADÍSTICAS GENERALES (ACTUALIZADA) -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/cardEstadisticas"
                     android:layout_width="match_parent"
@@ -112,11 +112,13 @@
                             android:textColor="@color/colorTextPrimary"
                             android:layout_marginBottom="16dp" />
 
+                        <!-- PRIMERA FILA: Servicios, Ingresos, Km -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="horizontal"
-                            android:baselineAligned="false">
+                            android:baselineAligned="false"
+                            android:layout_marginBottom="12dp">
 
                             <LinearLayout
                                 android:layout_width="0dp"
@@ -126,8 +128,7 @@
                                 android:layout_margin="4dp"
                                 android:padding="16dp"
                                 android:background="@color/colorBlueLight"
-                                android:gravity="center"
-                                android:layout_gravity="center_vertical">
+                                android:gravity="center">
 
                                 <TextView
                                     android:id="@+id/tvTotalServicios"
@@ -154,8 +155,7 @@
                                 android:layout_margin="4dp"
                                 android:padding="16dp"
                                 android:background="@color/colorBlueLight"
-                                android:gravity="center"
-                                android:layout_gravity="center_vertical">
+                                android:gravity="center">
 
                                 <TextView
                                     android:id="@+id/tvTotalIngresos"
@@ -182,8 +182,7 @@
                                 android:layout_margin="4dp"
                                 android:padding="16dp"
                                 android:background="@color/colorBlueLight"
-                                android:gravity="center"
-                                android:layout_gravity="center_vertical">
+                                android:gravity="center">
 
                                 <TextView
                                     android:id="@+id/tvTotalKm"
@@ -202,10 +201,203 @@
                                     android:textColor="@color/colorTextSecondary" />
                             </LinearLayout>
                         </LinearLayout>
+
+                        <!-- SEGUNDA FILA: Precio/Hora y Tiempo Trabajado -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:baselineAligned="false">
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical"
+                                android:layout_margin="4dp"
+                                android:padding="16dp"
+                                android:background="@color/colorBlueLight"
+                                android:gravity="center">
+
+                                <TextView
+                                    android:id="@+id/tvPrecioHoraPromedio"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textSize="24sp"
+                                    android:textStyle="bold"
+                                    android:textColor="@color/colorPurple"
+                                    tools:text="24.5€/h" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Precio/Hora"
+                                    android:textSize="14sp"
+                                    android:textColor="@color/colorTextSecondary" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical"
+                                android:layout_margin="4dp"
+                                android:padding="16dp"
+                                android:background="@color/colorBlueLight"
+                                android:gravity="center">
+
+                                <TextView
+                                    android:id="@+id/tvTiempoTrabajado"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textSize="24sp"
+                                    android:textStyle="bold"
+                                    android:textColor="@color/colorRed"
+                                    tools:text="6.5h" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Tiempo Total"
+                                    android:textSize="14sp"
+                                    android:textColor="@color/colorTextSecondary" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical"
+                                android:layout_margin="4dp"
+                                android:padding="16dp"
+                                android:background="@color/colorBlueLight"
+                                android:gravity="center">
+
+                                <TextView
+                                    android:id="@+id/tvEficienciaGeneral"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textSize="24sp"
+                                    android:textStyle="bold"
+                                    android:textColor="@color/colorAccent"
+                                    tools:text="68%" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Eficiencia"
+                                    android:textSize="14sp"
+                                    android:textColor="@color/colorTextSecondary" />
+                            </LinearLayout>
+                        </LinearLayout>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- TARJETA DE ESTADÍSTICAS DETALLADAS POR TIPO (ÚNICA SECCIÓN) -->
+                <!-- NUEVA TARJETA: DETALLES DE PRECIO/HORA -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardPrecioHora"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="2dp"
+                    app:cardBackgroundColor="@color/colorCardBackground">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Análisis de Precio por Hora"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/colorTextPrimary"
+                            android:layout_marginBottom="16dp" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginBottom="8dp">
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="Precio/hora mínimo:"
+                                    android:textColor="@color/colorTextSecondary"
+                                    android:textSize="14sp" />
+
+                                <TextView
+                                    android:id="@+id/tvPrecioHoraMinimo"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textColor="@color/colorRed"
+                                    android:textSize="14sp"
+                                    android:textStyle="bold"
+                                    tools:text="18.50€/h" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginBottom="8dp">
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="Precio/hora máximo:"
+                                    android:textColor="@color/colorTextSecondary"
+                                    android:textSize="14sp" />
+
+                                <TextView
+                                    android:id="@+id/tvPrecioHoraMaximo"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textColor="@color/colorAccent"
+                                    android:textSize="14sp"
+                                    android:textStyle="bold"
+                                    tools:text="32.80€/h" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal">
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="Rango de precio/hora:"
+                                    android:textColor="@color/colorTextSecondary"
+                                    android:textSize="14sp" />
+
+                                <TextView
+                                    android:id="@+id/tvRangoPrecioHora"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textColor="@color/colorTextPrimary"
+                                    android:textSize="14sp"
+                                    android:textStyle="bold"
+                                    tools:text="14.30€/h" />
+                            </LinearLayout>
+                        </LinearLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- TARJETA DE ESTADÍSTICAS DETALLADAS POR TIPO (ACTUALIZADA) -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/cardEstadisticasDetalladas"
                     android:layout_width="match_parent"

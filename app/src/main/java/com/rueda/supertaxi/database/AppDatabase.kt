@@ -6,13 +6,14 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.rueda.supertaxi.database.migrations.MIGRATION_1_2
 import com.rueda.supertaxi.model.Servicio
 import com.rueda.supertaxi.model.TipoServicio
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-@Database(entities = [Servicio::class, TipoServicio::class], version = 1, exportSchema = false)
+@Database(entities = [Servicio::class, TipoServicio::class], version = 2, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun servicioDao(): ServicioDao
@@ -27,8 +28,9 @@ abstract class AppDatabase : RoomDatabase() {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
-                    "super_taxi_database"
+                    "supertaxi_database"
                 )
+                .addMigrations(MIGRATION_1_2)
                 .addCallback(DatabaseCallback())
                 .build()
                 INSTANCE = instance

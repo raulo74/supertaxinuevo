@@ -31,7 +31,13 @@ data class Servicio(
     val kmTotales: Double,
     val precioKm: Double,
     val ruta1: List<Coordenada>,
-    val ruta2: List<Coordenada>
+    val ruta2: List<Coordenada>,
+    
+    // NUEVOS CAMPOS PARA JORNADA
+    val inicioJornada: LocalTime? = null,
+    val finJornada: LocalTime? = null,
+    val esUltimoServicioJornada: Boolean = false,
+    val numeroServicioEnJornada: Int = 1
 )
 
 data class Coordenada(

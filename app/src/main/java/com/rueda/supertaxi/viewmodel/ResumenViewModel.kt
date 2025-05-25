@@ -28,7 +28,13 @@ data class EstadisticaTipoServicio(
     val totalKilometros: Double,
     val ingresoPromedio: Double,
     val kmPromedio: Double,
-    val porcentajeIngresos: Double
+    val porcentajeIngresos: Double,
+    // NUEVOS CAMPOS PARA PRECIO/HORA
+    val precioHoraPromedio: Double,
+    val precioHoraMinimo: Double,
+    val precioHoraMaximo: Double,
+    val tiempoTotalMinutos: Double,
+    val eficienciaPromedio: Double
 )
 
 class ResumenViewModel(application: Application) : AndroidViewModel(application) {
@@ -44,7 +50,14 @@ class ResumenViewModel(application: Application) : AndroidViewModel(application)
     val totalIngresos: LiveData<Double>
     val totalKilometros: LiveData<Double>
     
-    // Estadísticas por tipo de servicio
+    // NUEVAS PROPIEDADES PARA PRECIO/HORA
+    val precioHoraPromedio: LiveData<Double>
+    val precioHoraMinimo: LiveData<Double>
+    val precioHoraMaximo: LiveData<Double>
+    val tiempoTotalTrabajado: LiveData<Double> // en horas
+    val eficienciaGeneral: LiveData<Double>
+    
+    // Estadísticas por tipo de servicio (actualizada)
     val estadisticasPorTipo: LiveData<List<EstadisticaTipoServicio>>
     
     init {
@@ -70,7 +83,42 @@ class ResumenViewModel(application: Application) : AndroidViewModel(application)
             servicios.sumOf { it.kmTotales }
         }
         
-        // Calcular estadísticas por tipo de servicio
+        // NUEVOS CÁLCULOS PARA PRECIO/HORA
+        precioHoraPromedio = serviciosFiltrados.map { servicios ->
+            if (servicios.isNotEmpty()) {
+                val preciosHora = servicios.map { it.precioHora }.filter { it > 0 }
+                if (preciosHora.isNotEmpty()) preciosHora.average() else 0.0
+            } else 0.0
+        }
+        
+        precioHoraMinimo = serviciosFiltrados.map { servicios ->
+            if (servicios.isNotEmpty()) {
+                val preciosHora = servicios.map { it.precioHora }.filter { it > 0 }
+                preciosHora.minOrNull() ?: 0.0
+            } else 0.0
+        }
+        
+        precioHoraMaximo = serviciosFiltrados.map { servicios ->
+            if (servicios.isNotEmpty()) {
+                val preciosHora = servicios.map { it.precioHora }.filter { it > 0 }
+                preciosHora.maxOrNull() ?: 0.0
+            } else 0.0
+        }
+        
+        tiempoTotalTrabajado = serviciosFiltrados.map { servicios ->
+            servicios.sumOf { it.minutosTotales } / 60.0 // convertir a horas
+        }
+        
+        eficienciaGeneral = serviciosFiltrados.map { servicios ->
+            if (servicios.isNotEmpty()) {
+                // Calcular eficiencia como ratio tiempo productivo vs tiempo total
+                val tiempoProductivo = servicios.sumOf { it.minutosTotales }
+                val tiempoTotal = calcularTiempoTotalJornadas(servicios)
+                if (tiempoTotal > 0) (tiempoProductivo / tiempoTotal) * 100 else 0.0
+            } else 0.0
+        }
+        
+        // Calcular estadísticas por tipo de servicio (ACTUALIZADA CON PRECIO/HORA)
         estadisticasPorTipo = serviciosFiltrados.map { servicios ->
             if (servicios.isEmpty()) {
                 emptyList()
@@ -93,6 +141,19 @@ class ResumenViewModel(application: Application) : AndroidViewModel(application)
                             0.0
                         }
                         
+                        // NUEVOS CÁLCULOS PARA PRECIO/HORA POR TIPO
+                        val preciosHora = serviciosDelTipo.map { it.precioHora }.filter { it > 0 }
+                        val precioHoraPromedio = if (preciosHora.isNotEmpty()) preciosHora.average() else 0.0
+                        val precioHoraMinimo = preciosHora.minOrNull() ?: 0.0
+                        val precioHoraMaximo = preciosHora.maxOrNull() ?: 0.0
+                        val tiempoTotalMinutos = serviciosDelTipo.sumOf { it.minutosTotales }
+                        
+                        // Eficiencia para este tipo de servicio
+                        val tiempoTotalJornadasTipo = calcularTiempoTotalJornadasPorTipo(serviciosDelTipo)
+                        val eficienciaPromedio = if (tiempoTotalJornadasTipo > 0) {
+                            (tiempoTotalMinutos / tiempoTotalJornadasTipo) * 100
+                        } else 0.0
+                        
                         EstadisticaTipoServicio(
                             tipoServicio = tipoServicio,
                             cantidadServicios = cantidadServicios,
@@ -100,12 +161,45 @@ class ResumenViewModel(application: Application) : AndroidViewModel(application)
                             totalKilometros = totalKilometros,
                             ingresoPromedio = ingresoPromedio,
                             kmPromedio = kmPromedio,
-                            porcentajeIngresos = porcentajeIngresos
+                            porcentajeIngresos = porcentajeIngresos,
+                            precioHoraPromedio = precioHoraPromedio,
+                            precioHoraMinimo = precioHoraMinimo,
+                            precioHoraMaximo = precioHoraMaximo,
+                            tiempoTotalMinutos = tiempoTotalMinutos,
+                            eficienciaPromedio = eficienciaPromedio
                         )
                     }
                     .sortedByDescending { it.totalIngresos }
             }
         }
+    }
+    
+    // NUEVO MÉTODO: Calcular tiempo total de jornadas
+    private fun calcularTiempoTotalJornadas(servicios: List<Servicio>): Double {
+        // Agrupar servicios por día
+        val serviciosPorDia = servicios.groupBy { it.dia }
+        
+        var tiempoTotalJornadas = 0.0
+        
+        serviciosPorDia.forEach { (_, serviciosDelDia) ->
+            if (serviciosDelDia.isNotEmpty()) {
+                val serviciosOrdenados = serviciosDelDia.sortedBy { it.hora1 }
+                val inicioJornada = serviciosOrdenados.first().inicioJornada ?: serviciosOrdenados.first().hora1
+                val finJornada = serviciosOrdenados.last().finJornada ?: serviciosOrdenados.last().hora3
+                
+                val minutosJornada = java.time.Duration.between(inicioJornada, finJornada).toMinutes().toDouble()
+                tiempoTotalJornadas += minutosJornada
+            }
+        }
+        
+        return tiempoTotalJornadas
+    }
+    
+    // NUEVO MÉTODO: Calcular tiempo total de jornadas por tipo
+    private fun calcularTiempoTotalJornadasPorTipo(serviciosDelTipo: List<Servicio>): Double {
+        // Para simplificar, usamos la suma de minutos totales de cada servicio
+        // En una implementación más compleja, calcularíamos el tiempo real de jornada por tipo
+        return serviciosDelTipo.sumOf { it.minutosTotales }
     }
     
     fun cambiarFiltro(filtro: FiltroTiempo) {
@@ -132,14 +226,21 @@ class ResumenViewModel(application: Application) : AndroidViewModel(application)
     
     private fun aplicarFiltro(servicios: List<Servicio>, filtro: FiltroTiempo): List<Servicio> {
         val hoy = LocalDate.now()
+        Log.d("ResumenViewModel", "Aplicando filtro $filtro. Fecha actual: $hoy. Total servicios: ${servicios.size}")
         
-        return when (filtro) {
+        val resultado = when (filtro) {
             FiltroTiempo.HOY -> {
-                servicios.filter { it.dia == hoy }
+                val filtrados = servicios.filter { it.dia == hoy }
+                Log.d("ResumenViewModel", "Filtro HOY: ${filtrados.size} servicios encontrados")
+                filtrados.forEach { 
+                    Log.d("ResumenViewModel", "Servicio fecha: ${it.dia} (${if(it.dia == hoy) "COINCIDE" else "NO COINCIDE"})")
+                }
+                filtrados
             }
             FiltroTiempo.SEMANA -> {
                 val inicioSemana = hoy.minusDays(hoy.dayOfWeek.value - 1L)
                 val finSemana = inicioSemana.plusDays(6)
+                Log.d("ResumenViewModel", "Filtro SEMANA: $inicioSemana a $finSemana")
                 servicios.filter { 
                     !it.dia.isBefore(inicioSemana) && !it.dia.isAfter(finSemana) 
                 }
@@ -147,13 +248,18 @@ class ResumenViewModel(application: Application) : AndroidViewModel(application)
             FiltroTiempo.MES -> {
                 val inicioMes = hoy.withDayOfMonth(1)
                 val finMes = hoy.with(TemporalAdjusters.lastDayOfMonth())
+                Log.d("ResumenViewModel", "Filtro MES: $inicioMes a $finMes")
                 servicios.filter { 
                     !it.dia.isBefore(inicioMes) && !it.dia.isAfter(finMes) 
                 }
             }
             FiltroTiempo.TODO -> {
+                Log.d("ResumenViewModel", "Filtro TODO: mostrando todos los servicios")
                 servicios
             }
         }
+        
+        Log.d("ResumenViewModel", "Resultado filtro: ${resultado.size} servicios")
+        return resultado
     }
 } 

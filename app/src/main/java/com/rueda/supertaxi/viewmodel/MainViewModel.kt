@@ -2,12 +2,17 @@ package com.rueda.supertaxi.viewmodel
 
 import android.app.Application
 import android.content.Intent
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import androidx.lifecycle.*
 import com.rueda.supertaxi.database.AppDatabase
 import com.rueda.supertaxi.model.Coordenada
 import com.rueda.supertaxi.model.Servicio
 import com.rueda.supertaxi.model.TipoServicio
+import com.rueda.supertaxi.model.JornadaCompleta
+import com.rueda.supertaxi.model.EstadisticasJornada
+import com.rueda.supertaxi.model.PrecioHoraEnCurso
 import com.rueda.supertaxi.repository.ServicioRepository
 import com.rueda.supertaxi.repository.TipoServicioRepository
 import com.rueda.supertaxi.util.DistanceCalculator
@@ -33,11 +38,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _tipoServicio = MutableLiveData<String>()
     val tipoServicio: LiveData<String> = _tipoServicio
 
-    // NUEVA VARIABLE: Para trackear si hay un servicio en progreso
+    // Variable para trackear si hay un servicio en progreso
     private val _servicioEnProgreso = MutableLiveData<Boolean>(false)
     val servicioEnProgreso: LiveData<Boolean> = _servicioEnProgreso
 
-    // NUEVA VARIABLE: Para trackear si el tipo de servicio cambió durante el servicio
+    // Variable para trackear si el tipo de servicio cambió durante el servicio
     private val _tipoServicioCambiado = MutableLiveData<Boolean>(false)
     val tipoServicioCambiado: LiveData<Boolean> = _tipoServicioCambiado
 
@@ -115,6 +120,27 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _resumenEnabled = MutableLiveData<Boolean>(false)
     val resumenEnabled: LiveData<Boolean> = _resumenEnabled
 
+    // NUEVAS PROPIEDADES PARA JORNADA
+    private val _jornadaIniciada = MutableLiveData<Boolean>(false)
+    val jornadaIniciada: LiveData<Boolean> = _jornadaIniciada
+
+    private val _inicioJornadaHoy = MutableLiveData<LocalTime?>()
+    val inicioJornadaHoy: LiveData<LocalTime?> = _inicioJornadaHoy
+
+    private val _estadisticasJornadaHoy = MutableLiveData<JornadaCompleta?>()
+    val estadisticasJornadaHoy: LiveData<JornadaCompleta?> = _estadisticasJornadaHoy
+
+    // NUEVAS PROPIEDADES PARA TRACKING EN TIEMPO REAL
+    private val _precioHoraEnCurso = MutableLiveData<PrecioHoraEnCurso>()
+    val precioHoraEnCurso: LiveData<PrecioHoraEnCurso> = _precioHoraEnCurso
+
+    private val _timerJornada = MutableLiveData<String>("00:00")
+    val timerJornada: LiveData<String> = _timerJornada
+
+    // Timer para actualizar estadísticas en tiempo real
+    private var timerHandler: Handler? = null
+    private var timerRunnable: Runnable? = null
+
     // Utilidades
     private val geocodingUtil = GeocodingUtil(application.applicationContext)
 
@@ -128,6 +154,86 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         allTiposServicio = tipoServicioRepository.allTiposServicio
 
         resetVariables()
+        
+        // Verificar si ya hay una jornada iniciada hoy
+        viewModelScope.launch {
+            verificarJornadaDelDia()
+        }
+        
+        iniciarTimerJornada()
+    }
+
+    // NUEVOS MÉTODOS PARA JORNADA
+
+    private suspend fun verificarJornadaDelDia() {
+        val serviciosHoy = servicioRepository.calcularJornadaCompleta(LocalDate.now())
+        if (serviciosHoy != null && serviciosHoy.servicios.isNotEmpty()) {
+            _jornadaIniciada.value = true
+            _inicioJornadaHoy.value = serviciosHoy.inicioJornada
+            _estadisticasJornadaHoy.value = serviciosHoy
+        }
+    }
+
+    fun marcarFinJornada() {
+        viewModelScope.launch {
+            servicioRepository.marcarFinJornada(LocalDate.now(), LocalTime.now())
+            _jornadaIniciada.value = false
+            
+            // Actualizar estadísticas finales de la jornada
+            val jornadaFinal = servicioRepository.calcularJornadaCompleta(LocalDate.now())
+            _estadisticasJornadaHoy.value = jornadaFinal
+        }
+    }
+
+    fun obtenerEstadisticasJornada(fechaInicio: LocalDate, fechaFin: LocalDate, callback: (EstadisticasJornada) -> Unit) {
+        viewModelScope.launch {
+            val estadisticas = servicioRepository.calcularEstadisticasJornadas(fechaInicio, fechaFin)
+            callback(estadisticas)
+        }
+    }
+
+    // NUEVOS MÉTODOS PARA TRACKING EN TIEMPO REAL
+
+    private fun iniciarTimerJornada() {
+        timerHandler = Handler(Looper.getMainLooper())
+        timerRunnable = object : Runnable {
+            override fun run() {
+                if (_jornadaIniciada.value == true) {
+                    actualizarEstadisticasEnTiempoReal()
+                    actualizarTimerDisplay()
+                }
+                timerHandler?.postDelayed(this, 30000) // Actualizar cada 30 segundos
+            }
+        }
+        timerHandler?.post(timerRunnable!!)
+    }
+
+    private fun actualizarEstadisticasEnTiempoReal() {
+        viewModelScope.launch {
+            try {
+                val estadisticasActuales = servicioRepository.calcularPrecioHoraProyectado(
+                    LocalDate.now(), 
+                    _servicioEnProgreso.value == true
+                )
+                _precioHoraEnCurso.postValue(estadisticasActuales)
+            } catch (e: Exception) {
+                Log.e("MainViewModel", "Error actualizando estadísticas en tiempo real", e)
+            }
+        }
+    }
+
+    private fun actualizarTimerDisplay() {
+        _inicioJornadaHoy.value?.let { inicio ->
+            val tiempoTranscurrido = Duration.between(inicio, LocalTime.now())
+            val horas = tiempoTranscurrido.toHours()
+            val minutos = tiempoTranscurrido.toMinutes() % 60
+            _timerJornada.postValue(String.format("%02d:%02d", horas, minutos))
+        }
+    }
+
+    // Método para obtener proyección de ingresos
+    fun obtenerProyeccionIngresos(horasObjetivo: Double): Double {
+        return _precioHoraEnCurso.value?.calcularProyeccionDiaria(horasObjetivo) ?: 0.0
     }
 
     // Métodos para interacción con la UI
@@ -180,6 +286,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         
         _dia.value = LocalDate.now()
         _hora1.value = LocalTime.now()
+        
+        // Marcar inicio de jornada si es el primer servicio del día
+        if (_jornadaIniciada.value != true) {
+            _jornadaIniciada.value = true
+            _inicioJornadaHoy.value = LocalTime.now()
+        }
         
         // Si es "Mano Alzada", no se guarda ruta1
         if (_tipoServicio.value == "Mano Alzada") {
@@ -306,9 +418,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _minutosTotales.value = minutosTotalesValue
 
             if (minutosTotalesValue > 0) {
-                _precioHora.value = (importeVal / (minutosTotalesValue / 60))
+                val horasDecimales = minutosTotalesValue / 60.0
+                _precioHora.value = if (horasDecimales > 0) importeVal / horasDecimales else 0.0
+                Log.d("MainViewModel", "Precio por hora calculado: ${_precioHora.value} (${importeVal}€ / ${horasDecimales}h)")
             } else {
                 _precioHora.value = 0.0
+                Log.d("MainViewModel", "Precio por hora = 0 (sin tiempo)")
             }
 
             // Calcular precio por km
@@ -386,7 +501,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun resetVariables() {
         Log.d("MainViewModel", "Iniciando resetVariables()")
         
-        // Reiniciar variables del servicio
+        // Reiniciar variables del servicio (MANTENER _jornadaIniciada)
         _tipoServicio.value = ""
         _servicioEnProgreso.value = false
         _tipoServicioCambiado.value = false
@@ -425,21 +540,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _tipoServicio.value = "Parada de taxis"
         setTipoServicio("Parada de taxis")
         
-        Log.d("MainViewModel", "resetVariables() completado - Tipo servicio: Parada de taxis")
+        Log.d("MainViewModel", "resetVariables() completado - Jornada mantenida")
     }
 
     fun getServicioActual(): Servicio? {
         return servicioActual
     }
 
-    // NUEVO MÉTODO: Para detener el servicio de ubicación
+    // Método para detener el servicio de ubicación
     private fun detenerServicioUbicacion() {
         Log.d("MainViewModel", "Deteniendo servicio de ubicación")
         val intent = Intent(getApplication(), LocationService::class.java)
         getApplication<Application>().stopService(intent)
     }
 
-    // NUEVO MÉTODO: Para cancelar el servicio actual
+    // Método para cancelar el servicio actual
     fun cancelarServicioActual() {
         Log.d("MainViewModel", "Cancelando servicio actual")
         
@@ -452,13 +567,33 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         Log.d("MainViewModel", "Servicio cancelado y variables reseteadas")
     }
 
-    // NUEVO MÉTODO: Para verificar si se puede volver atrás
+    // Método para verificar si se puede volver atrás
     fun puedeVolverAtras(): Boolean {
         return _servicioEnProgreso.value == true
     }
 
-    // NUEVO MÉTODO: Para verificar si el tipo de servicio cambió
+    // Método para verificar si el tipo de servicio cambió
     fun tipoServicioHaCambiado(): Boolean {
         return _tipoServicioCambiado.value == true
+    }
+
+    // Nuevo método para finalizar jornada completamente
+    fun finalizarJornadaCompleta() {
+        marcarFinJornada()
+        _jornadaIniciada.value = false
+        _inicioJornadaHoy.value = null
+        _estadisticasJornadaHoy.value = null
+        _precioHoraEnCurso.value = PrecioHoraEnCurso() // Reset
+        _timerJornada.value = "00:00"
+        detenerTimer()
+    }
+
+    private fun detenerTimer() {
+        timerRunnable?.let { timerHandler?.removeCallbacks(it) }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        detenerTimer()
     }
 }
