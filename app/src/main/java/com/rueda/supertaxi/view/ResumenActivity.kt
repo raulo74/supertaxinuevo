@@ -2,10 +2,13 @@ package com.rueda.supertaxi.view
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
+import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.chip.Chip
@@ -15,6 +18,9 @@ import com.rueda.supertaxi.databinding.ActivityResumenBinding
 import com.rueda.supertaxi.model.Servicio
 import com.rueda.supertaxi.viewmodel.FiltroTiempo
 import com.rueda.supertaxi.viewmodel.ResumenViewModel
+import com.rueda.supertaxi.viewmodel.MainViewModel
+import androidx.lifecycle.ViewModelProvider
+import android.content.Context
 
 class ResumenActivity : AppCompatActivity() {
     private lateinit var binding: ActivityResumenBinding
@@ -31,6 +37,9 @@ class ResumenActivity : AppCompatActivity() {
         setupChipGroup()
         setupObservers()
         setupListeners()
+        
+        // NUEVO: Verificar si hay un servicio activo
+        verificarServicioActivo()
     }
     
     private fun setupToolbar() {
@@ -141,5 +150,25 @@ class ResumenActivity : AppCompatActivity() {
             }
             .setNegativeButton(R.string.no, null)
             .show()
+    }
+
+    // NUEVO: Verificar si hay un servicio activo
+    private fun verificarServicioActivo() {
+        val prefs = getSharedPreferences("SuperTaxiPrefs", Context.MODE_PRIVATE)
+        val servicioEnProgreso = prefs.getBoolean("servicioEnProgreso", false)
+        
+        if (servicioEnProgreso) {
+            mostrarIndicadorServicioActivo()
+        }
+    }
+
+    private fun mostrarIndicadorServicioActivo() {
+        com.google.android.material.snackbar.Snackbar.make(
+            binding.root,
+            "Hay un servicio en progreso. Puedes volver al servicio tocando el botón de navegación.",
+            com.google.android.material.snackbar.Snackbar.LENGTH_LONG
+        ).setAction("Volver al servicio") {
+            finish()
+        }.show()
     }
 } 

@@ -25,7 +25,6 @@ import com.google.android.material.textfield.TextInputEditText
 import com.rueda.supertaxi.R
 import com.rueda.supertaxi.databinding.ActivityMainBinding
 import com.rueda.supertaxi.model.TipoServicio
-import com.rueda.supertaxi.util.LocationService
 import com.rueda.supertaxi.viewmodel.MainViewModel
 import com.rueda.supertaxi.view.DetalleActivity
 

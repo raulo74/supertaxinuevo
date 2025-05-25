@@ -1,6 +1,7 @@
 package com.rueda.supertaxi.viewmodel
 
 import android.app.Application
+import android.content.Context
 import android.content.Intent
 import android.os.Handler
 import android.os.Looper
@@ -284,6 +285,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         tipoServicioOriginal = _tipoServicio.value ?: ""
         _tipoServicioCambiado.value = false
         
+        // NUEVO: Guardar estado en SharedPreferences
+        val prefs = getApplication<Application>().getSharedPreferences("SuperTaxiPrefs", Context.MODE_PRIVATE)
+        prefs.edit().putBoolean("servicioEnProgreso", true).apply()
+        
         _dia.value = LocalDate.now()
         _hora1.value = LocalTime.now()
         
@@ -348,6 +353,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         // Marcar que el servicio ya no está en progreso
         _servicioEnProgreso.value = false
         _tipoServicioCambiado.value = false
+        
+        // NUEVO: Limpiar estado en SharedPreferences
+        val prefs = getApplication<Application>().getSharedPreferences("SuperTaxiPrefs", Context.MODE_PRIVATE)
+        prefs.edit().putBoolean("servicioEnProgreso", false).apply()
         
         // Actualizar estado de botones
         _empezarEnabled.value = false
@@ -557,6 +566,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // Método para cancelar el servicio actual
     fun cancelarServicioActual() {
         Log.d("MainViewModel", "Cancelando servicio actual")
+        
+        // NUEVO: Limpiar estado en SharedPreferences
+        val prefs = getApplication<Application>().getSharedPreferences("SuperTaxiPrefs", Context.MODE_PRIVATE)
+        prefs.edit().putBoolean("servicioEnProgreso", false).apply()
         
         // Detener cualquier tracking de ubicación activo
         detenerServicioUbicacion()

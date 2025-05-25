@@ -27,9 +27,9 @@ import com.google.android.material.textfield.TextInputEditText
 import com.rueda.supertaxi.R
 import com.rueda.supertaxi.databinding.ActivityMainBinding
 import com.rueda.supertaxi.model.TipoServicio
-import com.rueda.supertaxi.util.LocationService
 import com.rueda.supertaxi.viewmodel.MainViewModel
 import androidx.appcompat.app.AppCompatDelegate
+import android.widget.TextView
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -226,47 +226,26 @@ class MainActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_historial -> {
-                    // Verificar si hay un servicio en progreso antes de navegar
-                    if (viewModel.puedeVolverAtras()) {
-                        MaterialAlertDialogBuilder(this)
-                            .setTitle(getString(R.string.servicio_en_progreso))
-                            .setMessage(getString(R.string.cancelar_servicio_mensaje))
-                            .setPositiveButton(getString(R.string.si_cancelar_servicio)) { _, _ ->
-                                val intent = Intent(this, ResumenActivity::class.java)
-                                startActivity(intent)
-                            }
-                            .setNegativeButton(getString(R.string.no_continuar_servicio), null)
-                            .show()
-                    } else {
-                        val intent = Intent(this, ResumenActivity::class.java)
-                        startActivity(intent)
-                    }
+                    // CAMBIO: Permitir navegación libre sin cancelar servicio
+                    Log.d("MainActivity", "Navegando a Historial - Servicio en progreso: ${viewModel.servicioEnProgreso.value}")
+                    val intent = Intent(this, ResumenActivity::class.java)
+                    startActivity(intent)
                     true
                 }
                 R.id.nav_ingresos -> {
-                    if (viewModel.puedeVolverAtras()) {
-                        MaterialAlertDialogBuilder(this)
-                            .setTitle(getString(R.string.servicio_en_progreso))
-                            .setMessage(getString(R.string.cancelar_servicio_mensaje))
-                            .setPositiveButton(getString(R.string.si_cancelar_servicio)) { _, _ ->
-                                val intent = Intent(this, IngresosActivity::class.java)
-                                startActivity(intent)
-                            }
-                            .setNegativeButton(getString(R.string.no_continuar_servicio), null)
-                            .show()
-                    } else {
-                        val intent = Intent(this, IngresosActivity::class.java)
-                        startActivity(intent)
-                    }
+                    // CAMBIO: Permitir navegación libre sin cancelar servicio
+                    Log.d("MainActivity", "Navegando a Ingresos - Servicio en progreso: ${viewModel.servicioEnProgreso.value}")
+                    val intent = Intent(this, IngresosActivity::class.java)
+                    startActivity(intent)
                     true
                 }
                 R.id.nav_ajustes -> {
-                    // Verificar si hay un servicio en progreso antes de navegar
+                    // Para ajustes sí mantenemos la confirmación porque podría afectar permisos o configuración
                     if (viewModel.puedeVolverAtras()) {
                         MaterialAlertDialogBuilder(this)
                             .setTitle(getString(R.string.servicio_en_progreso))
-                            .setMessage(getString(R.string.cancelar_servicio_mensaje))
-                            .setPositiveButton(getString(R.string.si_cancelar_servicio)) { _, _ ->
+                            .setMessage("¿Quieres ir a ajustes? El servicio actual continuará en segundo plano.")
+                            .setPositiveButton("Sí, ir a ajustes") { _, _ ->
                                 val intent = Intent(this, SettingsActivity::class.java)
                                 startActivity(intent)
                             }
@@ -428,11 +407,25 @@ class MainActivity : AppCompatActivity() {
         viewModel.servicioEnProgreso.observe(this) { enProgreso ->
             Log.d("MainActivity", "Servicio en progreso: $enProgreso")
             
-            // Opcional: Cambiar el título de la toolbar para indicar el estado
+            // Cambiar el título de la toolbar para indicar el estado
             if (enProgreso) {
-                supportActionBar?.title = "SuperTaxi - Servicio en curso"
+                // Cambiar título para indicar servicio activo
+                binding.toolbar.findViewById<TextView>(R.id.toolbar_title)?.apply {
+                    text = "SuperTaxi - ⏱️ Servicio activo"
+                    setTextColor(ContextCompat.getColor(this@MainActivity, R.color.colorAccent))
+                } ?: run {
+                    // Si no encuentra el TextView, usar el método tradicional
+                    supportActionBar?.title = "SuperTaxi - ⏱️ Servicio activo"
+                }
             } else {
-                supportActionBar?.title = "SuperTaxi"
+                // Restaurar título normal
+                binding.toolbar.findViewById<TextView>(R.id.toolbar_title)?.apply {
+                    text = getString(R.string.app_name)
+                    setTextColor(ContextCompat.getColor(this@MainActivity, android.R.color.white))
+                } ?: run {
+                    // Si no encuentra el TextView, usar el método tradicional
+                    supportActionBar?.title = getString(R.string.app_name)
+                }
             }
         }
         

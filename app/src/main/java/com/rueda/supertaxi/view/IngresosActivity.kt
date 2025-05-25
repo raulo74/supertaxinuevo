@@ -1,15 +1,20 @@
 package com.rueda.supertaxi.view
 
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.rueda.supertaxi.R
 import com.rueda.supertaxi.adapter.EstadisticaTipoAdapter
 import com.rueda.supertaxi.databinding.ActivityIngresosBinding
 import com.rueda.supertaxi.viewmodel.FiltroTiempo
+import com.rueda.supertaxi.viewmodel.MainViewModel
 import com.rueda.supertaxi.viewmodel.ResumenViewModel
 import java.text.DecimalFormat
 
@@ -30,6 +35,9 @@ class IngresosActivity : AppCompatActivity() {
         setupChipGroup()
         setupObservers()
         setupListeners()
+        
+        // NUEVO: Verificar si hay un servicio activo
+        verificarServicioActivo()
         
         // Forzar la carga inicial
         viewModel.cambiarFiltro(FiltroTiempo.HOY)
@@ -341,5 +349,25 @@ class IngresosActivity : AppCompatActivity() {
             Log.d("IngresosActivity", "Swipe refresh ejecutado")
             binding.swipeRefresh.isRefreshing = false
         }
+    }
+
+    // NUEVO: Verificar si hay un servicio activo
+    private fun verificarServicioActivo() {
+        val prefs = getSharedPreferences("SuperTaxiPrefs", Context.MODE_PRIVATE)
+        val servicioEnProgreso = prefs.getBoolean("servicioEnProgreso", false)
+        
+        if (servicioEnProgreso) {
+            mostrarIndicadorServicioActivo()
+        }
+    }
+
+    private fun mostrarIndicadorServicioActivo() {
+        com.google.android.material.snackbar.Snackbar.make(
+            binding.root,
+            "Hay un servicio en progreso. Los datos se actualizarán cuando finalices el servicio.",
+            com.google.android.material.snackbar.Snackbar.LENGTH_LONG
+        ).setAction("Volver al servicio") {
+            finish()
+        }.show()
     }
 } 
