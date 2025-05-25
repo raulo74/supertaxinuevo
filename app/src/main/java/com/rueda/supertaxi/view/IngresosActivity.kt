@@ -146,6 +146,87 @@ class IngresosActivity : AppCompatActivity() {
             }
         }
         
+        // Observer para precio por hora promedio (primera fila)
+        viewModel.precioHoraPromedio.observe(this) { precioHora ->
+            Log.d("IngresosActivity", "Precio hora promedio recibido: $precioHora")
+            val textoFormateado = "${decimalFormat.format(precioHora)}€/h"
+            binding.tvPrecioHoraPromedio.text = textoFormateado
+            Log.d("IngresosActivity", "tvPrecioHoraPromedio actualizado a: $textoFormateado")
+            
+            runOnUiThread {
+                binding.tvPrecioHoraPromedio.requestLayout()
+                Log.d("IngresosActivity", "Forzando actualización de tvPrecioHoraPromedio en hilo principal")
+            }
+        }
+        
+        // Observer para tiempo total trabajado
+        viewModel.tiempoTotalTrabajado.observe(this) { tiempoHoras ->
+            Log.d("IngresosActivity", "Tiempo total trabajado recibido: $tiempoHoras horas")
+            val textoFormateado = "${decimalFormat.format(tiempoHoras)}h"
+            binding.tvTiempoTrabajado.text = textoFormateado
+            Log.d("IngresosActivity", "tvTiempoTrabajado actualizado a: $textoFormateado")
+            
+            runOnUiThread {
+                binding.tvTiempoTrabajado.requestLayout()
+                Log.d("IngresosActivity", "Forzando actualización de tvTiempoTrabajado en hilo principal")
+            }
+        }
+        
+        // Observer para eficiencia general
+        viewModel.eficienciaGeneral.observe(this) { eficiencia ->
+            Log.d("IngresosActivity", "Eficiencia general recibida: $eficiencia")
+            val textoFormateado = "${eficiencia.toInt()}%"
+            binding.tvEficienciaGeneral.text = textoFormateado
+            Log.d("IngresosActivity", "tvEficienciaGeneral actualizado a: $textoFormateado")
+            
+            runOnUiThread {
+                binding.tvEficienciaGeneral.requestLayout()
+                Log.d("IngresosActivity", "Forzando actualización de tvEficienciaGeneral en hilo principal")
+            }
+        }
+        
+        // Observer para precio por hora mínimo
+        viewModel.precioHoraMinimo.observe(this) { precioMin ->
+            Log.d("IngresosActivity", "Precio hora mínimo recibido: $precioMin")
+            val textoFormateado = "${decimalFormat.format(precioMin)}€/h"
+            binding.tvPrecioHoraMinimo.text = textoFormateado
+            Log.d("IngresosActivity", "tvPrecioHoraMinimo actualizado a: $textoFormateado")
+            
+            runOnUiThread {
+                binding.tvPrecioHoraMinimo.requestLayout()
+                Log.d("IngresosActivity", "Forzando actualización de tvPrecioHoraMinimo en hilo principal")
+            }
+        }
+        
+        // Observer para precio por hora máximo
+        viewModel.precioHoraMaximo.observe(this) { precioMax ->
+            Log.d("IngresosActivity", "Precio hora máximo recibido: $precioMax")
+            val textoFormateado = "${decimalFormat.format(precioMax)}€/h"
+            binding.tvPrecioHoraMaximo.text = textoFormateado
+            Log.d("IngresosActivity", "tvPrecioHoraMaximo actualizado a: $textoFormateado")
+            
+            runOnUiThread {
+                binding.tvPrecioHoraMaximo.requestLayout()
+                Log.d("IngresosActivity", "Forzando actualización de tvPrecioHoraMaximo en hilo principal")
+            }
+        }
+        
+        // Observer para rango de precio por hora (máximo - mínimo)
+        viewModel.precioHoraMaximo.observe(this) { precioMax ->
+            viewModel.precioHoraMinimo.observe(this) { precioMin ->
+                val rango = precioMax - precioMin
+                Log.d("IngresosActivity", "Rango precio hora calculado: $rango (Max: $precioMax - Min: $precioMin)")
+                val textoFormateado = "${decimalFormat.format(rango)}€/h"
+                binding.tvRangoPrecioHora.text = textoFormateado
+                Log.d("IngresosActivity", "tvRangoPrecioHora actualizado a: $textoFormateado")
+                
+                runOnUiThread {
+                    binding.tvRangoPrecioHora.requestLayout()
+                    Log.d("IngresosActivity", "Forzando actualización de tvRangoPrecioHora en hilo principal")
+                }
+            }
+        }
+        
         // Observar estadísticas detalladas por tipo
         viewModel.estadisticasPorTipo.observe(this) { estadisticas ->
             Log.d("IngresosActivity", "Estadísticas detalladas recibidas: ${estadisticas.size} tipos")
