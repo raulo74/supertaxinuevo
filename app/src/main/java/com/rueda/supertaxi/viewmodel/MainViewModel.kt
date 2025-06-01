@@ -142,6 +142,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var timerHandler: Handler? = null
     private var timerRunnable: Runnable? = null
 
+    // Variables para el cronómetro grande
+    private val _cronometroGrande = MutableLiveData<String>("00:00:00")
+    val cronometroGrande: LiveData<String> = _cronometroGrande
+
+    private val _cronometroGrandeVisible = MutableLiveData<Boolean>(false)
+    val cronometroGrandeVisible: LiveData<Boolean> = _cronometroGrandeVisible
+
+    private val _cardCronometroVisible = MutableLiveData<Boolean>(false)
+    val cardCronometroVisible: LiveData<Boolean> = _cardCronometroVisible
+
+    // Handler y Runnable para el cronómetro
+    private var cronometroHandler: Handler? = null
+    private var cronometroRunnable: Runnable? = null
+    private var horaInicioCronometro: LocalTime? = null
+
     // Utilidades
     private val geocodingUtil = GeocodingUtil(application.applicationContext)
 
@@ -251,43 +266,50 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         
         _tipoServicio.value = tipo
         
+        // FORZAR ocultación de tarjeta para CUALQUIER cambio de tipo
+        Log.d("MainViewModel", "FORZANDO ocultación de tarjeta por cambio de tipo")
+        _cardCronometroVisible.value = false
+        _cronometroGrandeVisible.value = false
+        
+        // Si hay cronómetro activo, detenerlo
+        if (cronometroRunnable != null) {
+            Log.d("MainViewModel", "Deteniendo cronómetro existente")
+            detenerCronometroParada()
+        }
+        
+        // Debug después del cambio
+        debugTarjetaStatus()
+        
         // Solo cambiar el estado de los botones si NO hay un servicio en progreso
         if (_servicioEnProgreso.value != true) {
             // Lógica especial para tipo "Mano Alzada"
             if (tipo == "Mano Alzada") {
-                // Para Mano Alzada, bloqueamos Empezar y habilitamos directamente Inicio de servicio
                 _empezarEnabled.value = false
                 _inicioServicioEnabled.value = true
                 _finServicioEnabled.value = false
                 _resumenEnabled.value = false
                 
-                // Establecer fecha y hora de inicio automáticamente
                 _dia.value = LocalDate.now()
                 _hora1.value = LocalTime.now()
-                
-                // No iniciamos tracking para ruta1 en este caso
                 _ruta1.value = mutableListOf()
             } else {
-                // Para el resto de tipos de servicio, seguimos el flujo normal
                 _empezarEnabled.value = true
                 _inicioServicioEnabled.value = false
                 _finServicioEnabled.value = false
                 _resumenEnabled.value = false
             }
         }
+        
+        Log.d("MainViewModel", "setTipoServicio completado para: $tipo")
     }
 
     fun empezarServicio() {
-        Log.d("MainViewModel", "empezarServicio iniciado")
+        Log.d("MainViewModel", "empezarServicio iniciado con tipo: ${_tipoServicio.value}")
         
         // Marcar que hay un servicio en progreso
         _servicioEnProgreso.value = true
         tipoServicioOriginal = _tipoServicio.value ?: ""
         _tipoServicioCambiado.value = false
-        
-        // NUEVO: Guardar estado en SharedPreferences
-        val prefs = getApplication<Application>().getSharedPreferences("SuperTaxiPrefs", Context.MODE_PRIVATE)
-        prefs.edit().putBoolean("servicioEnProgreso", true).apply()
         
         _dia.value = LocalDate.now()
         _hora1.value = LocalTime.now()
@@ -298,16 +320,40 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _inicioJornadaHoy.value = LocalTime.now()
         }
         
-        // Si es "Mano Alzada", no se guarda ruta1
-        if (_tipoServicio.value == "Mano Alzada") {
-            _ruta1.value = mutableListOf()
-        } else {
-            // Iniciar servicio de ubicación para ruta1
-            val intent = Intent(getApplication(), LocationService::class.java).apply {
-                putExtra("trackRoute1", true)
-                putExtra("trackRoute2", false)
+        // Controlar qué hacer según el tipo de servicio
+        when (_tipoServicio.value) {
+            "Mano Alzada" -> {
+                Log.d("MainViewModel", "Iniciando servicio Mano Alzada - NO cronómetro")
+                // Para Mano Alzada: no ruta1, no cronómetro, no tarjeta
+                _ruta1.value = mutableListOf()
+                _cardCronometroVisible.value = false
+                _cronometroGrandeVisible.value = false
             }
-            getApplication<Application>().startService(intent)
+            "Parada de taxis" -> {
+                Log.d("MainViewModel", "Iniciando servicio Parada de taxis - SÍ cronómetro")
+                // Para Parada de taxis: sí ruta1, sí cronómetro
+                val intent = Intent(getApplication(), LocationService::class.java).apply {
+                    putExtra("trackRoute1", true)
+                    putExtra("trackRoute2", false)
+                }
+                getApplication<Application>().startService(intent)
+                
+                // Mostrar tarjeta e iniciar cronómetro SOLO para Parada de taxis
+                iniciarCronometroParada()
+            }
+            else -> {
+                Log.d("MainViewModel", "Iniciando servicio ${_tipoServicio.value} - NO cronómetro")
+                // Para otros tipos de servicio: sí ruta1, no cronómetro, no tarjeta
+                val intent = Intent(getApplication(), LocationService::class.java).apply {
+                    putExtra("trackRoute1", true)
+                    putExtra("trackRoute2", false)
+                }
+                getApplication<Application>().startService(intent)
+                
+                // Asegurar que no se muestre cronómetro para otros tipos
+                _cardCronometroVisible.value = false
+                _cronometroGrandeVisible.value = false
+            }
         }
         
         // Actualizar estado de botones
@@ -316,12 +362,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _finServicioEnabled.value = false
         _resumenEnabled.value = false
         
-        Log.d("MainViewModel", "Servicio marcado como en progreso")
+        Log.d("MainViewModel", "Servicio iniciado. Tipo: ${_tipoServicio.value}, Tarjeta visible: ${_cardCronometroVisible.value}")
     }
 
     fun inicioServicio() {
         // Guardar hora2
         _hora2.value = LocalTime.now()
+        
+        // NUEVO: Detener cronómetro y ocultar tarjeta si estaba activo
+        if (_cronometroGrandeVisible.value == true) {
+            detenerCronometroParada()
+        }
         
         // Detener tracking de ruta1 y comenzar ruta2
         val intent = Intent(getApplication(), LocationService::class.java).apply {
@@ -510,6 +561,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun resetVariables() {
         Log.d("MainViewModel", "Iniciando resetVariables()")
         
+        // PRIMERO: Detener cronómetro si está activo
+        if (_cronometroGrandeVisible.value == true) {
+            detenerCronometroParada()
+        }
+        
+        // SEGUNDO: Ocultar tarjeta de cronómetro completamente
+        _cardCronometroVisible.value = false
+        _cronometroGrandeVisible.value = false
+        
         // Reiniciar variables del servicio (MANTENER _jornadaIniciada)
         _tipoServicio.value = ""
         _servicioEnProgreso.value = false
@@ -549,7 +609,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _tipoServicio.value = "Parada de taxis"
         setTipoServicio("Parada de taxis")
         
-        Log.d("MainViewModel", "resetVariables() completado - Jornada mantenida")
+        Log.d("MainViewModel", "resetVariables() completado. Tarjeta visible: ${_cardCronometroVisible.value}")
     }
 
     fun getServicioActual(): Servicio? {
@@ -566,6 +626,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // Método para cancelar el servicio actual
     fun cancelarServicioActual() {
         Log.d("MainViewModel", "Cancelando servicio actual")
+        
+        // NUEVO: Detener cronómetro si está activo
+        if (_cronometroGrandeVisible.value == true) {
+            detenerCronometroParada()
+        }
         
         // NUEVO: Limpiar estado en SharedPreferences
         val prefs = getApplication<Application>().getSharedPreferences("SuperTaxiPrefs", Context.MODE_PRIVATE)
@@ -605,8 +670,62 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         timerRunnable?.let { timerHandler?.removeCallbacks(it) }
     }
 
+    // Método para iniciar el cronómetro
+    private fun iniciarCronometroParada() {
+        Log.d("MainViewModel", "Iniciando cronómetro de parada")
+        horaInicioCronometro = LocalTime.now()
+        _cardCronometroVisible.value = true
+        _cronometroGrandeVisible.value = true
+        
+        cronometroHandler = Handler(Looper.getMainLooper())
+        cronometroRunnable = object : Runnable {
+            override fun run() {
+                actualizarCronometroParada()
+                cronometroHandler?.postDelayed(this, 1000) // Actualizar cada segundo
+            }
+        }
+        cronometroHandler?.post(cronometroRunnable!!)
+    }
+
+    // Método para actualizar el cronómetro
+    private fun actualizarCronometroParada() {
+        horaInicioCronometro?.let { inicio ->
+            val tiempoTranscurrido = Duration.between(inicio, LocalTime.now())
+            val horas = tiempoTranscurrido.toHours()
+            val minutos = (tiempoTranscurrido.toMinutes() % 60)
+            val segundos = (tiempoTranscurrido.seconds % 60)
+            
+            val tiempoFormateado = String.format("%02d:%02d:%02d", horas, minutos, segundos)
+            _cronometroGrande.postValue(tiempoFormateado)
+        }
+    }
+
+    // Método para detener el cronómetro
+    private fun detenerCronometroParada() {
+        Log.d("MainViewModel", "Deteniendo cronómetro de parada")
+        cronometroRunnable?.let { cronometroHandler?.removeCallbacks(it) }
+        
+        // Ocultar completamente la tarjeta
+        _cardCronometroVisible.value = false
+        _cronometroGrandeVisible.value = false
+        _cronometroGrande.value = "00:00:00"
+        horaInicioCronometro = null
+    }
+
     override fun onCleared() {
         super.onCleared()
         detenerTimer()
+        // NUEVO: Limpiar cronómetro
+        cronometroRunnable?.let { cronometroHandler?.removeCallbacks(it) }
+    }
+
+    // AÑADIR método para debug
+    fun debugTarjetaStatus() {
+        Log.d("MainViewModel", "=== DEBUG TARJETA STATUS ===")
+        Log.d("MainViewModel", "cardCronometroVisible: ${_cardCronometroVisible.value}")
+        Log.d("MainViewModel", "cronometroGrandeVisible: ${_cronometroGrandeVisible.value}")
+        Log.d("MainViewModel", "tipoServicio: ${_tipoServicio.value}")
+        Log.d("MainViewModel", "servicioEnProgreso: ${_servicioEnProgreso.value}")
+        Log.d("MainViewModel", "============================")
     }
 }

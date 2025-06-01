@@ -244,187 +244,80 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Panel simplificado para cronómetro -->
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardMapaPreview"
+                android:id="@+id/cardCronometro"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:visibility="gone"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="2dp"
-                app:layout_constraintTop_toBottomOf="@id/cardControles">
+                app:cardBackgroundColor="@color/colorCardBackground"
+                app:layout_constraintTop_toBottomOf="@id/cardControles"
+                tools:visibility="gone">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:padding="20dp"
+                    android:gravity="center"
+                    android:visibility="gone"
+                    android:id="@+id/layoutContenidoCronometro">
 
-                    <FrameLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="180dp"
-                        android:background="@color/colorBlueLight">
+                    <!-- Título del cronómetro -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Tiempo en parada"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/colorTextPrimary"
+                        android:layout_marginBottom="16dp"
+                        android:gravity="center" />
+
+                    <!-- Cronómetro grande -->
+                    <LinearLayout
+                        android:id="@+id/layoutCronometroGrande"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:visibility="gone"
+                        android:background="@drawable/bg_cronometro_grande"
+                        android:padding="16dp"
+                        android:gravity="center">
 
                         <ImageView
-                            android:layout_width="48dp"
-                            android:layout_height="48dp"
-                            android:layout_gravity="center"
-                            android:src="@drawable/ic_map"
-                            app:tint="@color/colorPrimary" />
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_timer"
+                            app:tint="@color/colorPrimary"
+                            android:layout_marginEnd="12dp" />
 
                         <TextView
-                            android:id="@+id/routeStatusText"
+                            android:id="@+id/tvCronometroGrande"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_gravity="center|bottom"
-                            android:layout_marginBottom="16dp"
-                            android:text=""
-                            android:textColor="@color/colorTextSecondary"
-                            android:textSize="14sp" />
-                    </FrameLayout>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="16dp">
-
-                        <LinearLayout
-                            android:id="@+id/panelRutaCliente"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:visibility="gone">
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginBottom="4dp"
-                                android:text="Ruta hasta el cliente"
-                                android:textColor="@color/colorTextPrimary"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginBottom="8dp"
-                                android:orientation="horizontal">
-
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="Tiempo:"
-                                    android:textColor="@color/colorTextSecondary"
-                                    android:textSize="14sp" />
-
-                                <TextView
-                                    android:id="@+id/tvTiempoHastaCliente"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="0 min"
-                                    android:textColor="@color/colorTextPrimary"
-                                    android:textSize="14sp"
-                                    android:textStyle="bold" />
-                            </LinearLayout>
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal">
-
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="Distancia:"
-                                    android:textColor="@color/colorTextSecondary"
-                                    android:textSize="14sp" />
-
-                                <TextView
-                                    android:id="@+id/tvDistanciaHastaCliente"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="0.0 km"
-                                    android:textColor="@color/colorTextPrimary"
-                                    android:textSize="14sp"
-                                    android:textStyle="bold" />
-                            </LinearLayout>
-                        </LinearLayout>
-
-                        <View
-                            android:id="@+id/separadorRutas"
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:layout_marginTop="8dp"
-                            android:layout_marginBottom="8dp"
-                            android:background="@color/colorDivider"
-                            android:visibility="gone" />
-
-                        <LinearLayout
-                            android:id="@+id/panelRutaServicio"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:visibility="gone">
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginBottom="4dp"
-                                android:text="Ruta del servicio"
-                                android:textColor="@color/colorTextPrimary"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginBottom="8dp"
-                                android:orientation="horizontal">
-
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="Tiempo:"
-                                    android:textColor="@color/colorTextSecondary"
-                                    android:textSize="14sp" />
-
-                                <TextView
-                                    android:id="@+id/tvTiempoServicio"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="0 min"
-                                    android:textColor="@color/colorTextPrimary"
-                                    android:textSize="14sp"
-                                    android:textStyle="bold" />
-                            </LinearLayout>
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal">
-
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="Distancia:"
-                                    android:textColor="@color/colorTextSecondary"
-                                    android:textSize="14sp" />
-
-                                <TextView
-                                    android:id="@+id/tvDistanciaServicio"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="0.0 km"
-                                    android:textColor="@color/colorTextPrimary"
-                                    android:textSize="14sp"
-                                    android:textStyle="bold" />
-                            </LinearLayout>
-                        </LinearLayout>
+                            android:text="00:00:00"
+                            android:textColor="@color/colorPrimary"
+                            android:textSize="32sp"
+                            android:textStyle="bold"
+                            android:fontFamily="monospace"
+                            android:letterSpacing="0.1" />
                     </LinearLayout>
+
+                    <!-- Mensaje de estado -->
+                    <TextView
+                        android:id="@+id/tvEstadoCronometro"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Esperando en parada de taxis..."
+                        android:textSize="14sp"
+                        android:textColor="@color/colorTextSecondary"
+                        android:layout_marginTop="12dp"
+                        android:gravity="center" />
+
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </androidx.constraintlayout.widget.ConstraintLayout>

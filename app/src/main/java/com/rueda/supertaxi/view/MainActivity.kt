@@ -51,9 +51,6 @@ class MainActivity : AppCompatActivity() {
                 } else if (isTrackingRoute2) {
                     viewModel.addLocationToRoute(latitude, longitude, false)
                 }
-                
-                // Actualizar UI con la información de ruta si es necesario
-                updateRouteUI(isTrackingRoute1, isTrackingRoute2)
             }
         }
     }
@@ -112,6 +109,9 @@ class MainActivity : AppCompatActivity() {
         try {
             binding = ActivityMainBinding.inflate(layoutInflater)
             setContentView(binding.root)
+            
+            // ASEGURAR que la tarjeta esté oculta al inicio
+            ocultarTarjetaCronometroCompletamente()
             
             // NUEVO: Configurar el manejo del botón de navegación hacia atrás
             setupOnBackPressedCallback()
@@ -439,8 +439,8 @@ class MainActivity : AppCompatActivity() {
             binding.btnInicioServicio.isEnabled = enabled
             updateButtonStyle(binding.btnInicioServicio, enabled, R.color.colorAccent)
             
-            // Mostrar/ocultar sección de mapa
-            binding.cardMapaPreview.isVisible = enabled || viewModel.finServicioEnabled.value == true
+            // Mostrar/ocultar sección de cronómetro
+            binding.cardCronometro.isVisible = enabled || viewModel.finServicioEnabled.value == true
         }
         
         viewModel.finServicioEnabled.observe(this) { enabled ->
@@ -462,36 +462,49 @@ class MainActivity : AppCompatActivity() {
             binding.btnSiguienteServicio.isEnabled = enabled
             updateButtonStyle(binding.btnSiguienteServicio, enabled, R.color.colorAccent)
         }
-        
-        // Observar datos de distancia y tiempo para mostrar en la UI
-        viewModel.km1.observe(this) { km ->
-            if (km > 0) {
-                binding.tvDistanciaHastaCliente.text = String.format("%.1f km", km)
-            }
+
+        // Observer para la tarjeta del cronómetro CON CONTROL ESTRICTO
+        viewModel.cardCronometroVisible.observe(this) { visible ->
+            Log.d("MainActivity", "=== CONTROL TARJETA CRONOMETRO ===")
+            Log.d("MainActivity", "Comando visible: $visible")
+            Log.d("MainActivity", "Tipo servicio: ${viewModel.tipoServicio.value}")
+            Log.d("MainActivity", "Servicio en progreso: ${viewModel.servicioEnProgreso.value}")
+            
+            // Control estricto: solo mostrar si es Parada de taxis Y visible es true
+            val deberiaEstarVisible = visible && viewModel.tipoServicio.value == "Parada de taxis"
+            
+            binding.cardCronometro.visibility = if (deberiaEstarVisible) View.VISIBLE else View.GONE
+            binding.layoutContenidoCronometro.visibility = if (deberiaEstarVisible) View.VISIBLE else View.GONE
+            
+            Log.d("MainActivity", "Resultado final tarjeta: ${if (deberiaEstarVisible) "VISIBLE" else "GONE"}")
+            Log.d("MainActivity", "==================================")
         }
-        
-        viewModel.km2.observe(this) { km ->
-            if (km > 0) {
-                binding.tvDistanciaServicio.text = String.format("%.1f km", km)
+
+        // Observer para el tipo de servicio que FUERZA ocultación
+        viewModel.tipoServicio.observe(this) { tipo ->
+            Log.d("MainActivity", "=== CAMBIO TIPO SERVICIO ===")
+            Log.d("MainActivity", "Nuevo tipo: $tipo")
+            
+            // FORZAR ocultación si no es Parada de taxis
+            if (tipo != "Parada de taxis") {
+                Log.d("MainActivity", "FORZANDO ocultación - tipo no es Parada de taxis")
+                binding.cardCronometro.visibility = View.GONE
+                binding.layoutContenidoCronometro.visibility = View.GONE
             }
+            
+            Log.d("MainActivity", "============================")
         }
-        
-        // Si tienes LiveData para los tiempos, también puedes observarlos
-        viewModel.hora1.observe(this) { hora1 ->
-            viewModel.hora2.observe(this) { hora2 ->
-                if (hora1 != null && hora2 != null) {
-                    // Calcular y mostrar el tiempo hasta la recogida
-                    updateTiempoUI(hora1, hora2, binding.tvTiempoHastaCliente)
-                }
-            }
+
+        // Observer para el cronómetro grande
+        viewModel.cronometroGrandeVisible.observe(this) { visible ->
+            binding.layoutCronometroGrande.visibility = if (visible) View.VISIBLE else View.GONE
+            Log.d("MainActivity", "Cronómetro grande visible: $visible")
         }
-        
-        viewModel.hora2.observe(this) { hora2 ->
-            viewModel.hora3.observe(this) { hora3 ->
-                if (hora2 != null && hora3 != null) {
-                    // Calcular y mostrar el tiempo del servicio
-                    updateTiempoUI(hora2, hora3, binding.tvTiempoServicio)
-                }
+
+        viewModel.cronometroGrande.observe(this) { tiempo ->
+            binding.tvCronometroGrande.text = tiempo
+            if (binding.layoutCronometroGrande.visibility == View.VISIBLE) {
+                Log.d("MainActivity", "Cronómetro actualizado: $tiempo")
             }
         }
     }
@@ -508,28 +521,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
     
-    private fun updateTiempoUI(horaInicio: java.time.LocalTime, horaFin: java.time.LocalTime, textView: android.widget.TextView) {
-        val minutos = java.time.Duration.between(horaInicio, horaFin).toMinutes()
-        textView.text = "$minutos min"
-    }
-    
-    private fun updateRouteUI(isTrackingRoute1: Boolean, isTrackingRoute2: Boolean) {
-        binding.routeStatusText.text = when {
-            isTrackingRoute1 -> "Ruta hasta el cliente..."
-            isTrackingRoute2 -> "Ruta del servicio en curso..."
-            else -> if (viewModel.resumenEnabled.value == true) "Servicio finalizado" else ""
-        }
-        
-        // Mostrar/ocultar paneles según el estado del tracking
-        binding.panelRutaCliente.isVisible = isTrackingRoute1 || (viewModel.km1.value ?: 0.0) > 0
-        binding.panelRutaServicio.isVisible = isTrackingRoute2 || (viewModel.km2.value ?: 0.0) > 0
-    }
-    
     private fun setupListeners() {
-        // Spinner tipo de servicio
+        // Spinner tipo de servicio CON CONTROL ADICIONAL
         binding.spinnerTipoServicio.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 val selected = parent?.getItemAtPosition(position) as String
+                Log.d("MainActivity", "Spinner seleccionado: $selected")
+                
                 if (selected == "+ Añadir nuevo tipo") {
                     showAddTipoServicioDialog()
                     
@@ -538,21 +536,31 @@ class MainActivity : AppCompatActivity() {
                         parent.setSelection(0)
                     }
                 } else {
+                    Log.d("MainActivity", "Llamando setTipoServicio con: $selected")
                     viewModel.setTipoServicio(selected)
+                    
+                    // CONTROL ADICIONAL: Si no es Parada de taxis, ocultar inmediatamente
+                    if (selected != "Parada de taxis") {
+                        ocultarTarjetaCronometroCompletamente()
+                    }
                 }
             }
             
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                Log.d("MainActivity", "Spinner: nada seleccionado")
+                // Por seguridad, ocultar tarjeta
+                ocultarTarjetaCronometroCompletamente()
+            }
         }
         
         // Botón empezar con nueva estética
         binding.btnEmpezar.setOnClickListener {
             viewModel.empezarServicio()
             
-            // Animación para mostrar el panel de mapa
-            binding.cardMapaPreview.alpha = 0f
-            binding.cardMapaPreview.isVisible = true
-            binding.cardMapaPreview.animate()
+            // Animación para mostrar el panel de cronómetro
+            binding.cardCronometro.alpha = 0f
+            binding.cardCronometro.isVisible = true
+            binding.cardCronometro.animate()
                 .alpha(1f)
                 .setDuration(300)
                 .start()
@@ -596,9 +604,6 @@ class MainActivity : AppCompatActivity() {
                 viewModel.setComision(comision)
                 viewModel.setTipoPago(tipoPago)
                 viewModel.finServicio()
-                
-                // Actualizar UI para mostrar "Servicio finalizado"
-                binding.routeStatusText.text = "Servicio finalizado"
             } catch (e: NumberFormatException) {
                 MaterialAlertDialogBuilder(this)
                     .setTitle("Error de formato")
@@ -693,6 +698,9 @@ class MainActivity : AppCompatActivity() {
         // Reiniciar el ViewModel
         viewModel.resetVariables()
         
+        // FORZAR ocultación de tarjeta cronómetro
+        ocultarTarjetaCronometroCompletamente()
+        
         // Limpiar campos de UI
         binding.editImporte.setText("")
         binding.editImporte.error = null
@@ -712,11 +720,7 @@ class MainActivity : AppCompatActivity() {
         }
         
         // Ocultar paneles que deberían estar ocultos al inicio
-        binding.cardMapaPreview.isVisible = false
         binding.layoutDatosPago.isVisible = false
-        binding.panelRutaCliente.isVisible = false
-        binding.panelRutaServicio.isVisible = false
-        binding.separadorRutas.isVisible = false
         
         // Resetear ambos botones finales
         binding.btnResumenServicio.isEnabled = false
@@ -724,14 +728,15 @@ class MainActivity : AppCompatActivity() {
         updateButtonStyle(binding.btnResumenServicio, false, R.color.colorPurple)
         updateButtonStyle(binding.btnSiguienteServicio, false, R.color.colorAccent)
         
-        // Resetear textos informativos
-        binding.tvDistanciaHastaCliente.text = "0.0 km"
-        binding.tvDistanciaServicio.text = "0.0 km"
-        binding.tvTiempoHastaCliente.text = "0 min"
-        binding.tvTiempoServicio.text = "0 min"
-        binding.routeStatusText.text = ""
-        
         Log.d("MainActivity", "UI reiniciada con Parada de taxis como predeterminado")
+    }
+    
+    // AÑADIR método para ocultar forzosamente la tarjeta
+    private fun ocultarTarjetaCronometroCompletamente() {
+        binding.cardCronometro.visibility = View.GONE
+        binding.layoutContenidoCronometro.visibility = View.GONE
+        binding.layoutCronometroGrande.visibility = View.GONE
+        Log.d("MainActivity", "Tarjeta cronómetro FORZADAMENTE oculta")
     }
     
     override fun onDestroy() {

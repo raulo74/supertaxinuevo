@@ -86,4 +86,7 @@
 
     <!-- New string for statistics by service type -->
     <string name="estadisticas_por_tipo_servicio">Estadísticas por Tipo de Servicio</string>
+
+    <string name="tiempo_en_parada">Tiempo en parada</string>
+    <string name="esperando_en_parada">Esperando en parada de taxis...</string>
 </resources>
